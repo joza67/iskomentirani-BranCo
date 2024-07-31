@@ -1,0 +1,886 @@
+﻿@{
+    ViewBag.Title = "Administracija uređaja";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+    <link href="https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/MarkerCluster.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css" integrity="sha512-6ZCLMiYwTeli2rVh3XAPxy3YoR5fVxGdH/pz+KMCzRY2M65Emgkw00Yqmhh8qLGeYQ3LbVZGdmOX9KUjSKr0TA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    @* <link href="~/vendor/leaflet.markercluster/dist/MarkerCluster.Default.css" rel="stylesheet" /> *@
+
+    @*<link href="~/vendor/jquery-toast-plugin/dist/jquery.toast.min.css" rel="stylesheet" />*@
+    @* <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabulator/5.5.2/css/tabulator_midnight.min.css" integrity="sha512-sJ8NPXesT4f4NxqfxdZoAmXwDO+ZHDv8wpHmjSmD44atJSUbG80PMEiPcBm16yJE1RjHTU74nizg/oyBz822qg==" crossorigin="anonymous" referrerpolicy="no-referrer" /> *@
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabulator/5.5.2/css/tabulator_bootstrap5.min.css" integrity="sha512-904y6HHQyQS2fAyIQ869rH3AAkxZeFuxo9vheji5zw+IPEyioMWN4Bt/VFhzO5edPZ9m1lwkpYgXcYcm1vzaFw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    @*<link href="~/vendor/jsgrid/dist/jsgrid.css" rel="stylesheet" />
+    <link href="~/vendor/jsgrid/dist/jsgrid-theme.css" rel="stylesheet" />*@
+
+    <style>
+        .greenState {
+            background-color: #35AC20;
+        }
+
+        .yellowState {
+            background-color: #CBC525;
+            color: white;
+        }
+        
+        .orangeState {
+            background-color: #CA8224;
+            color: white;
+        }
+
+        .redState {
+            background-color: #CB291E;
+            color: white;
+        }
+
+        .btn-circle.btn-xl {
+            width: 20px;
+            height: 20px;
+            padding: 13px 13px;
+            border-radius: 120px;
+            font-size: 15px;
+            text-align: center;
+        }
+        .mycluster {
+            width: 40px;
+            height: 40px;
+            background-color: royalblue;
+            text-align: center;
+            font-size: 24px;
+        }
+
+        #spinner {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+
+        #mapCreate {
+            height: calc(100vh - 250px);
+            min-height: 50vh;
+        }
+
+        #map {
+            height: calc(100vh - 250px);
+            min-height: 50vh;
+        }
+
+        .custom-popup .leaflet-popup-content-wrapper {
+            background: #2c3e50;
+            color: #fff;
+            font-size: 16px;
+            line-height: 24px;
+        }
+
+            .custom-popup .leaflet-popup-content-wrapper a {
+                color: rgba(255,255,255,0.5);
+            }
+
+        .custom-popup .leaflet-popup-tip-container {
+            width: 30px;
+            height: 15px;
+        }
+
+        .custom-popup .leaflet-popup-tip {
+            background: #2c3e50;
+            margin-left: 12px;
+        }
+
+        .info {
+            padding: 6px 8px;
+            font: 14px/16px Arial, Helvetica, sans-serif;
+            background: white;
+            background: rgba(255,255,255,0.8);
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            border-radius: 5px;
+            line-height: 24px;
+        }
+
+            .info h4 {
+                margin: 0 0 5px;
+                color: #777;
+            }
+
+        .legend {
+            text-align: left;
+            line-height: 18px;
+            color: #555;
+        }
+
+            .legend i {
+                width: 18px;
+                height: 18px;
+                float: left;
+                margin-right: 8px;
+                opacity: 0.7;
+            }
+    </style>
+}
+
+<div class="row justify-content-center p-1 m-0">
+    <div class="col-sm-4 p-1">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <div class="float-left"><h6 class="m-0 font-weight-bold text-primary">Karta</h6></div>
+                <div id="signalStatus" class="btn-circle float-right bg-success"></div>
+            </div>
+            <div class="card-body">
+                <div class="" style="z-index: 0" id="map"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-8 p-1">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <div class="float-left">
+                    <h6 class="m-0 font-weight-bold text-primary">Uređaji</h6>
+                </div>
+                @* <button id="filter-clear">Reset filter</button> *@
+                <div style="padding-bottom: 10px; float: right; right: 50px; padding-right: 10px; display:flex;">
+
+                    <div class="dropdown">
+                        <button class="nav-link border-0 text-gray-600 dropdown-toggle" type="button" id="dropdownExport" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fa-solid fa-file-export"></i>
+                        </button>
+                        <div class="dropdown-menu" aria-labelledby="dropdownExport">
+                            <a class="dropdown-item" id="download-csv">Download CSV</a>
+                            <a class="dropdown-item" id="download-json">Download JSON</a>
+                            <a class="dropdown-item" id="download-xlsx">Download XLSX</a>
+                            <a class="dropdown-item" id="download-pdf">Download PDF</a>
+                            <a class="dropdown-item" id="download-html">Download HTML</a>
+                        </div>
+                    </div>
+
+                    <div class="dropdown">
+                        <button class="border-0 dropdown-toggle" type="button" id="columnDropdown" data-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-table-columns"></i>
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="columnDropdown" id="columnList">
+
+                        </ul>
+                    </div>
+
+                    <input id="selector" placeholder="Odaberite vrijeme..." style="border-bottom-left-radius: 12px; border-top-left-radius: 12px;" type="hidden" name="datee" class="flatpickr-input">
+                </div>
+            </div>
+            <div class="card-body" style="height: 100vh">
+                    @*<table id="jsGrid" class="jsGrid"></table>*@
+                    <div id="example" class="table" style="height: 100vh"></div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+            integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
+            crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.min.js"></script>
+    @* <script src="~/vendor/jquery-toast-plugin/dist/jquery.toast.min.js"></script> *@
+    <script type="text/javascript" src="https://unpkg.com/tabulator-tables/dist/js/tabulator.min.js"></script>    @* <script type="text/javascript" src="~/vendor/tabulator-tables/dist/js/tabulator.min.js"></script> *@
+    @*<script type="text/javascript" src=" ~/vendor/jquery-steps/build/jquery.steps.min.js"></script>
+    <script type="text/javascript" src="~/js/wizard.js"></script> *@
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/l10n/hr.min.js" integrity="sha512-b3um5f3u3XO5aBOQ5aYY/aJ2Af0O1IgT8bFE3dfwocOrHPIzmEcmQgxYpK3s1YKXVLlrNlQRf00L7SXyYRIdMw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script type="text/javascript" src="https://oss.sheetjs.com/sheetjs/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.20/jspdf.plugin.autotable.min.js"></script>
+    <script src="~/js/leaflet-color-markers.js"></script>
+
+    <script>
+
+        var json = [];
+        var table;
+
+        var optional_config = {
+
+            enableTime: true,
+            time_24hr: true,
+            altInput: true,
+            dateFormat: "Z",
+            //altFormat: "d.m.Y H:m:s",
+            altFormat: "F j, Y H:i",
+            maxDate: Date.now(),
+            locale: "hr",
+        }
+
+        var kalendar = $("#selector").flatpickr(optional_config);
+
+        // Inicijalizacija, dohvaćanje lokacija s GET zahtjevom i vraćanje podataka
+        async function LoadData(datum) {
+
+            if (!datum) {
+                datum = Date.now();
+            }
+            try {
+
+                // Add spinner to the body
+                const spinner = document.createElement('div');
+                spinner.id = 'spinner';
+                spinner.className = 'spinner-grow';
+                spinner.role = 'status';
+                document.body.appendChild(spinner);
+
+                const response = await fetch(`/Device/DevicesInfo?ts=${datum}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP Status: ${response.status}; Error Text: ${response.statusText}`);
+                }
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+                console.error('Fetch operation problem:', error);
+                throw error;
+            } finally {
+                document.querySelector(".spinner-grow").remove();
+            }
+        }
+
+        // Učitavanje varijable json s funkcijom koja vraća JSON s podacima
+        //json = LoadData().responseJSON;
+
+        
+        var today = new Date();
+        var dayOld = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+        var weekOld = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7);
+        var monthOld = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 30);
+
+        // Function to initialize the table
+        async function initializeTable(data) {
+            var today = new Date();
+            var dayOld = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+            var weekOld = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7);
+            var monthOld = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 30);
+
+            table = new Tabulator("#example", {
+                reactiveData: true,
+                data: data,
+                columns: [
+                    {
+                        "field": "Datum", "title": "Status",
+                        formatter: function (cell, formatterParams, onRendered) {
+                            var value = cell.getValue();
+                            var date = new Date(value);
+                            if (date > dayOld) {
+                                return "<btn class='btn-circle btn-xl greenState'></btn>";
+                            } else if (date > weekOld) {
+                                return "<btn class='btn-circle btn-xl yellowState'></btn>";
+                            } else if (date > monthOld) {
+                                return "<btn class='btn-circle btn-xl orangeState'></btn>";
+                            } else {
+                                return "<btn class='btn-circle btn-xl redState'></btn>";
+                            }
+                        }
+                    },
+                    {
+                        "field": "Name", "title": "Naziv",
+                        formatter: function (cell, formatterParams, onRendered) {
+                            var name = cell.getValue();
+                            var Id = cell.getRow().getData().Id;
+                            return "<a href='/Device/Details/" + Id + "'>" + name + "</a>";
+                        },
+                        headerFilter: "input"
+                    },
+                    {
+                        "field": "Datum", "title": "Posljednja poruka", formatter: function (cell, formatterParams, onRendered) {
+                            var value = cell.getValue();
+                            var date = new Date(value).format('d.m.yy HH:MM:ss');
+                            if (date === null) { return "N/A" };
+                            cell.value = date;
+                            return date;
+                        }
+                    },
+                    {
+                        "field": "SNR", "title": "SNR", formatter: function (cell, formatterParams, onRendered) {
+                            var snr = cell.getValue() + " dB";
+                            return snr;
+                        }
+                    },
+                    {
+                        "field": "RSSI", "title": "RSSI", formatter: function (cell, formatterParams, onRendered) {
+                            var rssi = cell.getValue() + " dBm";
+                            return rssi;
+                        }
+                    },
+                    {
+                        "field": "Bat", "title": "Baterija", formatter: function (cell, formatterParams, onRendered) {
+                            var bat = cell.getValue() + " V";
+                            return bat;
+                        }
+                    },
+                    {
+                        "field": "Temp", "title": "Temperature", formatter: function (cell, formatterParams, onRendered) {
+                            var tmp = cell.getValue() + " °C";
+                            return tmp;
+                        }
+                    },
+                    { "field": "Count", "title": "Ukupno poruka" },
+                    { "field": "Location", "title": "Lokacija", editor: "input", headerFilter: "list", headerFilterParams: { valuesLookup: true, clearable: true } },
+                    { "field": "DevEui", "title": "DevEui", headerFilter: "input" }
+                ],
+                pagination: true,
+                height: "100%",
+                layout: "fitColumns",
+                langs: {
+                    "hr-hr": {
+                        columns: { name: "Ime" },
+                        data: { loading: "Učitavanje", error: "Error" },
+                        groups: { item: "item", items: "items" },
+                        pagination: {
+                            page_size: "Vel.",
+                            page_title: "Prikaži",
+                            first: "Prva",
+                            first_title: "Prva str.",
+                            last: "Zadnja",
+                            last_title: "Zadnja str.",
+                            prev: "Prije",
+                            prev_title: "Prije str.",
+                            next: "Iduća",
+                            next_title: "Iduća str.",
+                            all: "Sve",
+                            counter: { showing: "Prikaz", of: "od", rows: "redaka", pages: "str." }
+                        },
+                        headerFilters: { default: "Filter", columns: { name: "Filter" } }
+                    }
+                },
+                locale: true,
+                selectable: true,
+                selectableRangeMode: "click",
+                rowSelectionChanged: function (row, isSelected) {
+                    if (isSelected) {
+                        table.deselectRowsExcept(row);
+                        highlightRowAndFocusPage(row);
+                    }
+                }
+            });
+
+            table.on("rowClick", (e, row) => {
+                const rowData = row.getData();
+                tempDat = rowData;
+                Sasa(rowData.Name, rowData.Lat, rowData.Long);
+            });
+
+            // Add other Tabulator options and custom functions here...
+
+            table.on("dataLoaded", function (data) {
+                table.getColumns().forEach((element) => {
+                    var listItem = document.createElement("li");
+                    var field = element.getDefinition().field;
+                    listItem.innerHTML = `<li class="dropdown-item"><input type="checkbox" onclick="toggleColumn('${field}')"> ${field}</li>`;
+                    columnList.appendChild(listItem);
+                });
+            });
+        }
+
+        // Inicijalizacija mape s određenim pogledom
+        var mapCenter = [44.5, 17];
+
+        // Postavljanje slojeva
+        var atrML = 'Powered by <a href="http://www.microlink.hr" > Micro-Link</a>';
+        var OpenStreetMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: atrML,
+            maxZoom: 19
+        });
+
+        var googleStreets = L.tileLayer('http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+            attribution: atrML,
+            maxZoom: 21,
+            subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
+        });
+
+        var mapbox = L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+            attribution: atrML,
+            maxZoom: 23,
+            id: 'mapbox/streets-v11',
+            tileSize: 512,
+            zoomOffset: -1,
+            accessToken: 'pk.eyJ1IjoianVrYTk3IiwiYSI6ImNrdTZxcng5eTN2c2IycHF0cnE1Zno5cHcifQ.gfrbRhNsX6XJOZywD-kSSw'
+        });
+
+        var Stadia_AlidadeSmoothDark = L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png', {
+            attribution: atrML,
+            maxZoom: 20
+        });
+
+        var OpenTopoMap = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+            attribution: atrML,
+            maxZoom: 20
+        });
+
+        var CyclOSM = L.tileLayer('https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png', {
+            attribution: atrML,
+            maxZoom: 20
+        });
+
+        var baseMaps = {
+            "Open Street Map": OpenStreetMap,
+            "Google streets": googleStreets,
+            "Map Box": mapbox,
+            "Stadia Dark": Stadia_AlidadeSmoothDark,
+            "OpenTopoMap": OpenTopoMap,
+            "CyclOSM": CyclOSM
+        }
+
+        // Dodavanje sloja na mapu
+        var _mapa = L.map('map', { center: mapCenter, zoom: 6, layers: baseMaps["Open Street Map"] });
+
+        // Dodavanje kontrole za slojeve, dolje lijevo
+        L.control.layers(baseMaps).addTo(_mapa).setPosition("bottomleft");
+
+        // Legenda alarma, gore desno
+        var legend = L.control({
+            position: 'topright'
+        });
+
+        // Stvaranje grupe markera (sloj)
+        var markersGroup = new L.MarkerClusterGroup(
+            {
+                spiderfyOnMaxZoom: false, // onemogućuje prikazivanje uređaja u obliku mreže kod maksimalnog zumiranja
+                disableClusteringAtZoom: 16 // onemogućuje klasteriranje na zumiranju razine 16
+            });
+
+        // Funkcija koja se izvršava kod klika na mapu
+        // Ova specifično odabire podatak u tablici koji je kliknut na mapi i odznačava ostale,
+        function markerOnClick(e) {
+            var row = table.getRowFromPosition(e.target.options.id);
+            table.deselectRow();
+
+            if (row) {
+                table.selectRow(row);
+            }
+        }
+        // Function to get the appropriate icon based on the date
+        function getIcon(date) {
+            if (date > dayOld) {
+                return greenIcon;
+            } else if (date > weekOld) {
+                return yellowIcon;
+            } else if (date > monthOld) {
+                return orangeIcon;
+            } else {
+                return redIcon;
+            }
+        }
+
+        // Function to create the custom popup HTML
+        function createPopupContent(el) {
+            const formatDate = (date) => new Date(date).format('d.m.yy HH:MM:ss') || "-";
+            return `
+                <div style="line-height: 2rem">
+                    <h3 style="margin:0">${el.Name || "No name"}</h3>
+                    <h5><br><b>DevEUI: </b><span>${el.DevEui || ""}</span>
+                    <h5><br><b>RSSI: </b><span>${el.RSSI ? el.RSSI + " dBm" : "/ dBm"}</span>
+                    <br><b>SNR: </b><span>${el.SNR ? el.SNR + " dB" : "/ dB"}</span>
+                    <br><b>Temperatura: </b><span>${el.Temp ? el.Temp + " °C" : ""}</span>
+                    <br><b>Baterija: </b><span>${el.Bat ? el.Bat + " V" : ""}</span>
+                    <br><b>Uk. poruka: </b><span>${el.Count || ""}</span>
+                    <br><h5><b>Zadnja poruka: </b><span>${formatDate(el.Datum)}</h5>
+                    <br>
+                    <br><input class="btn btn-default" style="max-width: 10vw" type="button" value="Detalji" onclick="window.open('/Device/Details/${el.Id}', true)">
+                </div>`;
+        }
+
+        // Function to create and add a marker
+        function addMarker(el) {
+            const date = new Date(el.Datum);
+            const icon = getIcon(date);
+            const marker = L.marker([el.Lat, el.Long], { title: el.Name, id: el.Id, icon: icon }).on('click', markerOnClick);
+            const popupContent = createPopupContent(el);
+            marker.bindPopup(popupContent);
+            markersGroup.addLayer(marker);
+        }
+
+        // Function to load the map with data
+        async function loadMap(json) {
+            // Briši stare
+            markersGroup.clearLayers();
+            // Stavi nove
+            json.forEach(addMarker);
+            _mapa.addLayer(markersGroup);
+        }
+
+        //loadMap(json);
+
+        function popup(name) {
+            var m = markersGroup.getLayers();
+            for (var i in m) {
+                if (m[i].options.title == name) {
+                    m[i].openPopup();
+                }
+            }
+        }
+
+        // Funkcija za zumiranje na određeni marker s parametrima id, lat, lng
+        function Sasa(id, lat, lng) {
+            _mapa.flyTo([lat, lng], 18, {
+                duration: 2.25, // Animation duration in seconds
+                easeLinearity: 0.75, // Animation smoothness
+            });
+            setTimeout(popup(id), 3250);
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const [jsonData] = await Promise.all([
+                    LoadData(),
+                    new Promise(resolve => setTimeout(resolve, 500)) // Ensure spinner is shown for at least 500ms
+                ]);
+
+                // Load map and table
+                await loadMap(jsonData);
+                await initializeTable(jsonData); 
+
+            } catch (error) {
+                console.error('Error loading data:', error);
+            }
+        });
+
+        //trigger download of data.csv file
+        document.getElementById("download-csv").addEventListener("click", function () {
+            table.download("csv", "data.csv");
+        });
+
+        //trigger download of data.json file
+        document.getElementById("download-json").addEventListener("click", function () {
+            table.download("json", "data.json");
+        });
+
+        //trigger download of data.xlsx file
+        document.getElementById("download-xlsx").addEventListener("click", function () {
+            table.download("xlsx", "data.xlsx", { sheetName: "My Data" });
+        });
+
+        //trigger download of data.pdf file
+        document.getElementById("download-pdf").addEventListener("click", function () {
+            table.download("pdf", "data.pdf", {
+                orientation: "portrait", //set page orientation to portrait
+                title: "Example Report", //add title to report
+            });
+        });
+
+        //trigger download of data.html file
+        document.getElementById("download-html").addEventListener("click", function () {
+            table.download("html", "data.html", { style: true });
+        });
+
+        const columnList = document.getElementById("columnList");
+
+        // Function to toggle Tabulator column based on dropdown selection
+        function toggleColumn(columnName) {
+            table.toggleColumn(columnName);
+        }
+
+        kalendar.config.onChange.push(async function (selectedDates, dateStr, instance) {
+            try {
+                const [jsonData] = await Promise.all([
+                    LoadData(Date.parse(new Date(dateStr).toISOString())),
+                    new Promise(resolve => setTimeout(resolve, 500)) // Ensure spinner is shown for at least 500ms
+                ]);
+
+                // Load map and table
+                await loadMap(jsonData);
+                await initializeTable(jsonData);
+
+            } catch (error) {
+                console.error('Error loading data:', error);
+            }
+        });
+
+    </script>
+
+    <!--LEAFLET SCRIPT-->
+    <!-- za Modal stvaranja nove lokacije -->
+    @*
+    <script>
+        // Inicijalizacija mape s određenim pogledom
+        var mapCenter = [44.5, 16];
+        var mapa = L.map('mapCreate').setView(mapCenter, 6);
+
+        // Postavljanje slojeva
+        var atrML = 'Powered by <a href="http://www.microlink.hr" > Micro-Link</a>';
+        var OpenStreetMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: atrML,
+            maxZoom: 19
+        });
+
+        var googleStreets = L.tileLayer('http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+            attribution: atrML,
+            maxZoom: 21,
+            subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
+        });
+
+        var mapbox = L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+            attribution: atrML,
+            maxZoom: 23,
+            id: 'mapbox/streets-v11',
+            tileSize: 512,
+            zoomOffset: -1,
+            accessToken: 'pk.eyJ1IjoianVrYTk3IiwiYSI6ImNrdTZxcng5eTN2c2IycHF0cnE1Zno5cHcifQ.gfrbRhNsX6XJOZywD-kSSw'
+        });
+
+        var Stadia_AlidadeSmoothDark = L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png', {
+            attribution: atrML,
+            maxZoom: 20
+        });
+
+        var OpenTopoMap = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+            attribution: atrML,
+            maxZoom: 20
+        });
+
+        var CyclOSM = L.tileLayer('https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png', {
+            attribution: atrML,
+            maxZoom: 20
+        });
+
+        var baseMaps = {
+            "Open Street Map": OpenStreetMap,
+            "Google streets": googleStreets,
+            "Map Box": mapbox,
+            "Stadia Dark": Stadia_AlidadeSmoothDark,
+            "OpenTopoMap": OpenTopoMap,
+            "CyclOSM": CyclOSM
+        }
+
+        // Dodavanje sloja na mapu
+        OpenStreetMap.addTo(mapa);
+
+        // Dodavanje kontrole za slojeve, dolje lijevo
+        L.control.layers(baseMaps).addTo(mapa).setPosition("bottomleft");
+
+        // Legenda alarma, gore desno
+        var legend = L.control({
+            position: 'topright'
+        });
+
+        // Inicijalizacija markera
+        var marker = new L.marker(mapCenter, {
+            draggable: true,
+            autoPan: true
+        }).addTo(mapa);
+
+        // Funkcija za ažuriranje lokacije markera
+        var updateMarker = function (lat, lng) {
+            //console.log(lat, " ", lng)
+            marker.setLatLng([lat, lng])
+            //.bindPopup("Your location :  " + marker.getLatLng().toString())
+            //.openPopup();
+            return false;
+        };
+
+        var updateMarkerByInputs = function () {
+            GetLocationDetails($('#Latitude').val(), $('#Longitude').val());
+            return updateMarker($('#Latitude').val(), $('#Longitude').val());
+        }
+        function updateTextbox(lat, lng) {
+            $('#Latitude').val(String(lat));
+            $('#Longitude').val(String(lng));
+        }
+
+        // Kod završetka povlačenja markera
+        // poziva se funkcija za ažuriranje vrijednosti u textboxu (updateTextbox)
+        // isto tako poziva funkciju za dobivanje detalja o lokacijama (GetLocationDetails)
+        marker.on("dragend", function (e) {
+            updateTextbox(e.target.getLatLng().lat.toFixed(6), e.target.getLatLng().lng.toFixed(6));
+            //console.log(e.target.getLatLng().lat.toFixed(6), e.target.getLatLng().lng.toFixed(6));
+            GetLocationDetails(e.target.getLatLng().lat.toFixed(6), e.target.getLatLng().lng.toFixed(6));
+        });
+
+        // Kod završetka povlačenja markera
+        // poziva se funkcija za ažuriranje vrijednosti u textboxu (updateTextbox)
+        // ažurira marker (updateMarker)
+        // isto tako poziva funkciju za dobivanje detalja o lokacijama (GetLocationDetails)
+        mapa.on('click', function (e) {
+            updateTextbox(e.latlng.lat.toFixed(6), e.latlng.lng.toFixed(6));
+            updateMarker(e.latlng.lat, e.latlng.lng);
+            GetLocationDetails(e.latlng.lat.toFixed(6), e.latlng.lng.toFixed(6));
+        });
+
+        // Kod upisa Longitude ili Latitude vrijednosti u prikladni textbox, ažurira se marker
+        $('#Longitude').on('input', updateMarkerByInputs);
+        $('#Latitude').on('input', updateMarkerByInputs);
+
+        $(document).ready(function () {
+            $('.custom-file-input').on("change", function () {
+                var fileName = $(this).val().split("\\").pop();
+                $(this).next('.custom-file-label').html(fileName);
+            });
+        });
+
+        // Dobiva detalje lokacije
+        // prenosi lat i lng vrijednosti
+        // sukladnom tome radi GET zahtjev
+        // vraća i ažurira poznate vrijednosti
+        // function GetLocationDetails(lat, lng) {
+        //     var requestOptions = {
+        //         method: 'GET',
+        //     };
+        //     let customUrl = "https://api.geoapify.com/v1/geocode/reverse?lat=" + lat + "&lon=" + lng + "&apiKey=86510586fe1e4a049ccf998716dc5d70"
+        //     fetch(customUrl, requestOptions)
+        //         .then(response => response.json())
+        //         .then(result => {
+        //             const { features } = result;
+        //             if (features && features.length > 0) {
+        //                 const feature = features[0];
+        //                 const { properties } = feature;
+        //                 if (properties) {
+        //                     const { name, street, housenumber, formatted, city, country } = properties;
+        //                     if (name) {
+        //                         document.getElementById("Name").value = name;
+        //                     } else {
+        //                         if (formatted) {
+        //                             document.getElementById("Name").value = formatted;
+        //                         }
+        //                     }
+        //                     if (street) {
+        //                         let Adresa = street;
+        //                         if (housenumber) {
+        //                             Adresa += " " + housenumber;
+        //                         }
+        //                         document.getElementById("Address").value = Adresa
+        //                     }
+        //                     if (city) {
+        //                         document.getElementById("City").value = city;
+        //                     }
+        //                     if (country) {
+        //                         document.getElementById("Country").value = country;
+        //                     }
+        //                 }
+        //             }
+        //         });
+        // }
+
+
+        // Get the textbox element and the Leaflet map object
+        const zoomField = document.getElementById('MapZoom');
+
+        mapa.on('zoomend', function () {
+
+            $('#MapZoom').val(String(mapa.getZoom()));
+
+        });
+
+        // Add your map layers and other configurations here...
+
+        // Set up an event listener for when the textbox value changes
+        zoomField.addEventListener('input', function () {
+            // Get the value from the textbox and parse it as a number
+            var zoomValue = parseInt(zoomField.value);
+            if (isNaN(zoomValue)) return; // Exit if the value is not a number
+
+            // Check that the zoom value is within the valid range for your map
+            const maxZoom = mapa.getMaxZoom();
+            const minZoom = mapa.getMinZoom();
+            if (zoomValue < minZoom || zoomValue > maxZoom) return;
+
+            // Set the new zoom level and optionally animate the zoom
+            mapa.flyTo(marker.getLatLng(), zoomValue, {
+                duration: 1.5, // Animation duration in seconds
+                easeLinearity: 0.5, // Animation smoothness
+            });
+        });
+
+        //This code listens for changes in the textbox field using the input event and updates the map's zoom level accordingly.
+        //The flyTo() method is used to smoothly animate the zoom to the new level over 1.5 seconds with a smoothness factor of 0.5.
+        //You can adjust these animation settings as needed.
+
+
+        var timeStamp;
+        var tempDate, timeStamp;
+        var newJson;
+        kalendar.config.onChange.push(function (selectedDates, dateStr, instance) {
+            //var x =
+            timeStamp = selectedDates[0].valueOf();
+            console.log(timeStamp);
+            newJson = LoadData(timeStamp).responseJSON;
+            table.replaceData(newJson);
+
+            markersGroup.clearLayers();
+            loadMap(newJson);
+        });
+
+        // function preuzmiCSV() {
+        //     var datum;
+        //     if (kalendar.selectedDates[0] == null) {
+        //         datum = Date.now();
+        //     } else {
+        //         datum = kalendar.selectedDates[0].valueOf();
+        //     }
+        //     var j = { ts: datum };
+        //     return $.ajax({
+        //         type: "POST",
+        //         url: "/WaterMeter/Export",
+        //         data: j,
+        //         async: false,
+        //         beforeSend: function () {
+        //             // Prije slanja se pokazuje ikona za učitavanje
+        //             $("body").append("<div id='spinner' class='spinner-grow' role='status'></div>");
+        //             //<i class='fa fa-spinner fa-spin'></i>
+        //         },
+        //         success: function (data) {
+        //             // Poslije slanja se uklanja ikona za učitavanje
+        //             $(".spinner-grow").remove();
+
+        //             // Ukoliko zahtjev uspije, vraća se data
+        //             return data;
+        //         },
+        //         failure: function (jqXHR, textStatus, errorThrown) {
+        //             $(".spinner-grow").remove();
+        //             alert("HTTP Status: " + jqXHR.status + "; Error Text: " + jqXHR.responseText); // Display error message
+        //         }
+        //     });
+        //     return true;
+        // }
+
+    </script> *@
+    @*
+    <script>
+        function submitForm() {
+            const form = document.getElementById("locationForm");
+            const data = {
+                name: form.elements["Name"].value,
+                country: form.elements["Country"].value,
+                city: form.elements["City"].value,
+                address: form.elements["Address"].value,
+                long: parseFloat(form.elements["Longitude"].value),
+                lat: parseFloat(form.elements["Latitude"].value),
+                mapZoom: parseFloat(form.elements["mapZoom"].value),
+                photoPath: form.elements["photoPath"].value,
+            };
+
+            const xhr = new XMLHttpRequest();
+            xhr.open("POST", "/api/locations", true);
+            xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+            xhr.onload = function () {
+                if (xhr.status >= 200 && xhr.status < 400) {
+                    const response = JSON.parse(xhr.responseText);
+                    //$(".content-wrapper").prepend("<div class='alert alert-success'>Uspješno ste stvorili novu lokaciju!</div>");
+                    //$("#example-modal").modal("hide");
+                    loadMap(GetLocations().responseJSON);
+                    showSuccessToast('Uspješno ste stvorili novu lokaciju!');
+                    $('#exampleModal').modal('hide')
+                    //$(".card").prepend("<div style='align-content: center; text-color:green;'>Uspješno ste stvorili novu lokaciju!</div>");
+                    //$(".card").prepend(response);
+                    Sasa(response.id, response.lat, response.long);
+                } else {
+                    showDangerToast('Greška' + response);
+                    console.error(xhr.responseText);
+                }
+            };
+            xhr.onerror = function () {
+                console.error(xhr.responseText);
+            };
+            xhr.send(JSON.stringify(data));
+        }
+    </script> *@
+
+    <script src="~/js/signalr/dist/browser/signalr.js"></script>
+    <script src="~/js/wanesy.js"></script>
+}

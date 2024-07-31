@@ -1,0 +1,644 @@
+﻿@model IEnumerable<MoveeDataFrameViewModel>
+
+@using LoRinoBackend.Functions;
+@using Microsoft.EntityFrameworkCore;
+@using Microsoft.AspNetCore.Identity
+
+@inject IMoveeEventRepository eventsList
+@inject IDeviceRepository device
+@inject ILocationRepository locations
+@inject UserManager<ApplicationUser> userManager
+
+@{ ViewBag.Title = "BranCo"; }
+
+  <script>
+      function timeConverter(UNIX_timestamp){
+  var a = new Date(UNIX_timestamp);
+  var months = ['Siječanj','Veljača','Ožujak','Travanj','Svibanj','Lipanj','Srpanj','Kolovoz','Rujan','Listopad','Studeni','Prosinac'];
+  var year = a.getFullYear();
+  var month = months[a.getMonth()];
+  var date = a.getDate();
+  var hour = a.getHours();
+  var min = a.getMinutes();
+  var sec = a.getSeconds();
+  var time = date + ' ' + month + ' ' + year + ' ' + hour + ':' + min + ':' + sec ;
+  return time;
+}
+
+    function timeNumConverter(UNIX_timestamp) {
+        var a = new Date(UNIX_timestamp);
+        var months = ['1.', '2.', '3.', '4.', '5.', '6.', '7.', '8.', '9.', '10.', '11.', '12.'];
+        var year = a.getFullYear();
+        var month = months[a.getMonth()];
+        var date = a.getDate();
+        var hour = a.getHours();
+        var min = "0" + a.getMinutes();
+        var sec = "0" + a.getSeconds();
+
+        var time = date + '.' + month + '' + year + '. ' + hour + ':' + min.substr(-2) + ':' + sec.substr(-2);
+        return time;
+    }
+
+  </script>
+<script type="text/javascript">
+    function timeSince(timeStamp) {
+      var now = new Date(),
+        secondsPast = (now.getTime() - timeStamp) / 1000;
+      if (secondsPast < 60) {
+        return parseInt(secondsPast) + ' s';
+      }
+      if (secondsPast < 3600) {
+        return parseInt(secondsPast / 60) + ' m';
+      }
+      if (secondsPast <= 86400) {
+        return parseInt(secondsPast / 3600) + ' h';
+      }
+      if (secondsPast > 86400) {
+        day = timeStamp.getDate();
+        month = timeStamp.toDateString().match(/ [a-zA-Z]*/)[0].replace(" ", "");
+        year = timeStamp.getFullYear() == now.getFullYear() ? "" : " " + timeStamp.getFullYear();
+        return day + " " + month + year;
+      }
+    }
+</script>
+
+
+
+@functions{
+
+    public string findUser(string id)
+    {
+        var userName = "";
+        ApplicationUser user = userManager.Users.Include(x => x.Company).FirstOrDefault(e => e.Id == id);
+        if (user != null)
+        {
+            userName = user.FirstName + " " + user.LastName;
+        }
+        return userName;
+    }
+}
+
+@{
+    var currentUserId = Context.User.Identity.Name;
+    ApplicationUser currentUser = userManager.Users.Include(x => x.Company).SingleOrDefaultAsync(x => x.UserName == currentUserId).Result;
+    var locationsByUser = locations.GetLocationsByUserId(currentUser.Id);
+    var allMsgs = Model.ToList();
+    List<Location> locationList = new List<Location>();
+    List<int> locationListIds = new List<int>();
+    //var newEventsCount = eventsList.CountAllActiveEvents();
+
+    if (User.IsInRole("Super Admin"))
+    {
+        locationList = locations.GetAllLocations().ToList();
+        locationListIds = locationList.Select(a => a.Id).ToList();
+    }
+    else if (User.IsInRole("Admin"))
+    {
+        locationList = locations.GetAllLocations().OrderBy(a => a.Id).Where(a => a.CompanyId == currentUser.Company.Id).ToList();
+        locationListIds = locationList.Select(a => a.Id).ToList();
+    }
+    else if (locationsByUser.Count() > 0)
+    {
+        locationList = locations.GetLocationsByUserId(currentUser.Id).ToList();
+        locationListIds = locationList.Select(a => a.Id).ToList();
+    }
+
+
+    IEnumerable<Device> allDevices;
+
+    if(User.IsInRole("Super Admin"))
+    {
+        allDevices = device.GetAllData(); 
+    }
+    else if(User.IsInRole("Admin"))
+    {
+        allDevices = device.GetAllData().OrderBy(a => a.Id).Where(a => a.Company.Id == currentUser.Company.Id);
+    }
+    else
+    {
+        allDevices = device.GetMineDevice(currentUser.Company.Id);
+    }
+
+    List<string> devIds = new List<string>();
+
+    foreach (var dev in allDevices)
+    {
+        devIds.Add(dev.DevEui);
+    }
+    List<MoveeEventFrame> moveeEvents = new List<MoveeEventFrame>();
+
+    if (User.IsInRole("Super Admin"))
+    {
+        moveeEvents = eventsList.GetAllData().Where(a => a.AlarmCount > 0 && a.IsCleared == false).ToList();
+    }
+    else if (User.IsInRole("Admin"))
+    {
+        moveeEvents = eventsList.GetAllData().OrderBy(a => a.Id).Where(a => a.AlarmCount > 0 && a.IsCleared == false).ToList();
+        moveeEvents = (from el in locationList
+                       join e in moveeEvents on el.Id equals e.LocationId
+                       where el.CompanyId == currentUser.Company.Id
+        select e
+                  ).ToList();
+
+    }
+    else if (locationsByUser.Count() > 0)
+    {
+        moveeEvents = eventsList.GetAllData().Where(a => a.AlarmCount > 0 && a.IsCleared == false).ToList();
+
+        moveeEvents = (from l in locationsByUser
+                  join e in moveeEvents on l.Id equals e.LocationId
+                  select e
+                  ).ToList();
+    }
+}
+
+<style type="text/css">
+    .State0 {
+        background-color: #FFFFFF;
+    }
+
+    .State1 {
+        background-color: #b7113c;
+        color: white;
+    }
+
+    .State2 {
+        background-color: #FFA500;
+        color: white;
+    }
+
+    .panel-body {
+        overflow-y: scroll;
+        height: 80vh;
+    }
+</style>
+       <div class="row justify-content-center m-0">
+
+        <div class="col-sm-6 p-0">
+            <div class="card shadow">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <div class="float-left"><h6 class="m-0 font-weight-bold text-primary">Karta</h6></div>
+                    @*<div id="signalStatus" class="btn-circle float-right bg-danger"></div>*@
+
+                </div>
+                <div class="card-body">
+                    <div class="" style="z-index: 800" id="map"></div>
+
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 p-0">
+            <div class="card shadow">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <div class="float-left">
+                        <div class="float-left">
+                            <h6 class="m-0 font-weight-bold text-primary">Događaji</h6>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="container" style="padding-left: 0px">
+               <div class="panel-body">
+                <table class="table" id="eventTable">
+                    <thead>
+                    <tr>
+                    <th scope="col">Id</th>
+                    <th scope="col">Vrijeme</th>
+                    <th scope="col">Lokacija</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Akcija</th>
+                </tr>
+                                </thead>
+                                <tbody>
+                                
+               @foreach (var moveeEvent in moveeEvents.OrderByDescending(i => i.Id).Where(i => i.LocationId != 0 && i.IsCleared == false))
+                {
+                    <tr>
+                    <td scope="col">@moveeEvent.Id</td>
+                                        <td scope="col">@moveeEvent.EventCreationTime.ToDateTime()</td>
+                    <td scope="col"><a asp-controller="Location" asp-action="LocationDetails" asp-route-id="@moveeEvent.LocationId">@locations.GetLocation(moveeEvent.LocationId).Name</a></td>
+                                        
+                    @if (moveeEvent.IsCleared == false && moveeEvent.IsAcked == false)
+                            {
+                                <td>Novi</td>
+                                <td scope="col"><a class="btn btn-default" asp-action="EventsDetails" asp-route-guid="@moveeEvent.Guid">Detalji</a></td>
+                            }
+                    else if (moveeEvent.IsCleared == false && moveeEvent.IsAcked == true)
+                            {
+                                 <td>Potvrđen</td>
+                                <td scope="col"><a class="btn btn-warning" asp-action="EventsDetails" asp-route-guid="@moveeEvent.Guid">Detalji</a></td>
+                            }
+                </tr>
+                }
+                                @*@if (!User.IsInRole("Super Admin") || !User.IsInRole("Admin") || locationsByUser.Count() == 0)
+                                {
+                                    <tr>
+                                        <td>Nemate prava na niti jednu lokaciju</td>
+
+                                    </tr>
+                                }*@
+                            </tbody>
+                </table>
+                </div>
+                </div>
+                </div>
+            </div>
+       </div>
+       
+       </div>
+
+       
+
+@section Scripts {
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.3.4/dist/leaflet.js"></script>
+    <script src="~/js/leaflet-color-markers.js"></script>
+    <link rel="stylesheet" href="~/css/MarkerCluster.css" />
+    <link rel="stylesheet" href="~/css/MarkerCluster.Default.css" />
+    <script src="~/js/leaflet.markercluster-src.js"></script>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/mc-datepicker/dist/mc-calendar.min.js"></script>
+
+    <style>
+        #map {
+            height: calc(100vh - 250px);
+            min-height: 50vh;
+        }
+
+        .custom-popup .leaflet-popup-content-wrapper {
+            background: #2c3e50;
+            color: #fff;
+            font-size: 16px;
+            line-height: 24px;
+        }
+
+            .custom-popup .leaflet-popup-content-wrapper a {
+                color: rgba(255,255,255,0.5);
+            }
+
+        .custom-popup .leaflet-popup-tip-container {
+            width: 30px;
+            height: 15px;
+        }
+
+        .custom-popup .leaflet-popup-tip {
+            background: #2c3e50;
+            margin-left: 12px;
+        }
+
+
+        .info {
+            padding: 6px 8px;
+            font: 14px/16px Arial, Helvetica, sans-serif;
+            background: white;
+            background: rgba(255,255,255,0.8);
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            border-radius: 5px;
+            line-height: 24px;
+        }
+
+            .info h4 {
+                margin: 0 0 5px;
+                color: #777;
+            }
+
+        .legend {
+            text-align: left;
+            line-height: 18px;
+            color: #555;
+        }
+
+            .legend i {
+                width: 18px;
+                height: 18px;
+                float: left;
+                margin-right: 8px;
+              
+               opacity: 0.7;
+            }
+    </style>
+    @*<script>
+        var num = @newEventsCount;
+            document.getElementById("alarmTagCount").innerHTML = num;
+        </script>*@
+
+    <script>
+
+           var map = L.map('map').setView([44.683545, 16.341171], 7.3);
+           var osmLayer = L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+                attribution: 'Powered by <a href="http://www.microlink.hr" > Micro-Link</a>',
+                maxZoom: 19,
+                id: 'mapbox/streets-v11',
+                tileSize: 512,
+                zoomOffset: -1,
+                accessToken: 'pk.eyJ1IjoianVrYTk3IiwiYSI6ImNrdTZxcng5eTN2c2IycHF0cnE1Zno5cHcifQ.gfrbRhNsX6XJOZywD-kSSw'
+            });
+
+
+        var eventList = @Html.Raw(Json.Serialize(moveeEvents));
+        var locationJson = @Html.Raw(Json.Serialize(locationList));
+        var json = @Html.Raw(Json.Serialize(allMsgs));
+        var locIdsList = @Html.Raw(Json.Serialize(locationListIds));
+        var allDevices = [];
+
+
+
+            osmLayer.addTo(map);
+
+            var markersGroup = L.layerGroup();
+
+            var currentTime = new Date();
+
+            var customOptions =
+            {
+                'maxWidth': '400',
+                'width': '200',
+                'className': 'popupCustom'
+            }
+
+            var iconList = [];
+            var markers = [];
+            var eventId = "";
+            var guid = "";
+            var eventTime = "";
+            var time = ""
+            //zeleni
+        locationJson.forEach(loc => {
+            let countAlarm = 0;
+
+
+            eventList.forEach(al => {
+                if (al.locationId == loc.id) {
+                    countAlarm = countAlarm + al.alarmCount;
+                    guid = al.guid;
+                    eventTime = al.eventCreationTime;
+                }
+            });
+
+            if(countAlarm === 0){
+
+            
+
+
+            var lat = loc.lat;
+            var lon = loc.long;
+
+            var markerLocation = new L.LatLng(lat, lon);
+
+            var _css = "";
+            var _msg = "";
+
+            var singleMarker = {};
+            singleMarker['id'] = loc.id;
+            singleMarker['lat'] = lat;
+            singleMarker['lon'] = lon;
+            singleMarker['name'] = loc.name;
+            singleMarker['cntAlarm'] = countAlarm;
+
+            iconList.push(singleMarker);
+
+            var icon = countAlarm > 0 ? redIcon : greenIcon;   // 86400000 is one day in miliseconds
+            var m = L.marker([loc.lat, loc.long], { title: loc.name, icon: icon });//.addTo(map);
+
+            var customPopup = "<div style=\"line-height: 2rem\">" +
+                "<h2 style=\"margin:0\">" + (loc.name != null ? loc.name : "No name") + "</h2>" +
+                (countAlarm > 0 ? "<br><b>Vrijeme: </b><span class=\"\">" + timeNumConverter(eventTime) : "") + "</span>" +
+                "<br><b>Alarm: </b><span class=" + (countAlarm > 0 ? "\"Critical\"" : "\"information\"") + " style=\"color: white; text-transform: uppercase; padding: 4px 8px; font-weight: bold; border-radius: 4px; \">" + (countAlarm > 0 ? "Aktivan" : "Nema alarma") + "</span>" +
+                "<br>"+
+                "<br><input class=\"btn btn-default\" style=\"max-width: 10vw\" type=\"button\" value=\"Lokacija\" onclick=\"window.open(\'" + './Location/LocationDetails/' + loc.id + "\', true)\"></button>" +
+                (countAlarm > 0 ? "<input class=\"btn btn-default\" style=\"max-width: 10vw\" type=\"button\" value=\"Detalji\" onclick=\"window.open(\'" + './MV/EventsDetails' + '?guid=' + guid + "\', true)\"></button>" : "") +
+                "</div>";
+
+                console.log('zeleni pin on load');
+                console.log(loc.id);
+            m.bindPopup(customPopup, customOptions);
+            markers.push(m);
+            markersGroup.addLayer(m);
+            }
+        });
+
+            markersGroup.addTo(map);
+            //crveni
+
+        locationJson.forEach(loc => {
+            let countAlarm = 0;
+
+
+            eventList.forEach(al => {
+                if (al.locationId == loc.id) {
+                    countAlarm = countAlarm + al.alarmCount;
+                    guid = al.guid;
+                    eventTime = al.eventCreationTime;
+                }
+            });
+
+            if (countAlarm > 0) {
+            var lat = loc.lat;
+            var lon = loc.long;
+
+            var markerLocation = new L.LatLng(lat, lon);
+
+            var _css = "";
+            var _msg = "";
+
+            var singleMarker = {};
+            singleMarker['id'] = loc.id;
+            singleMarker['lat'] = lat;
+            singleMarker['lon'] = lon;
+            singleMarker['name'] = loc.name;
+            singleMarker['cntAlarm'] = countAlarm;
+
+            iconList.push(singleMarker);
+
+            var icon = countAlarm > 0 ? redIcon : greenIcon;   // 86400000 is one day in miliseconds
+            var m = L.marker([loc.lat, loc.long], { title: loc.name, icon: icon });//.addTo(map);
+
+            var customPopup = "<div style=\"line-height: 2rem\">" +
+                "<h2 style=\"margin:0\">" + (loc.name != null ? loc.name : "No name") + "</h2>" +
+                (countAlarm > 0 ? "<br><b>Vrijeme: </b><span class=\"\">" + timeNumConverter(eventTime) : "") + "</span>" +
+                "<br><b>Alarm: </b><span class=" + (countAlarm > 0 ? "\"Critical\"" : "\"information\"") + " style=\"color: white; text-transform: uppercase; padding: 4px 8px; font-weight: bold; border-radius: 4px; \">" + (countAlarm > 0 ? "Aktivan" : "Nema alarma") + "</span>" +
+                "<br>" +
+                "<br><input class=\"btn btn-default\" style=\"max-width: 10vw\" type=\"button\" value=\"Lokacija\" onclick=\"window.open(\'" + './Location/LocationDetails/' + loc.id + "\', true)\"></button>" +
+                (countAlarm > 0 ? "<input class=\"btn btn-default\" style=\"max-width: 10vw\" type=\"button\" value=\"Detalji\" onclick=\"window.open(\'" + './MV/EventsDetails' + '?guid=' + guid + "\', true)\"></button>" : "") +
+                "</div>";
+
+            console.log('crveni pin on load');
+                console.log(loc.id);
+            m.bindPopup(customPopup, customOptions);
+            markers.push(m);
+            markersGroup.addLayer(m);
+            }
+
+        });
+
+        markersGroup.addTo(map);
+
+
+
+
+
+            function markerFunction(id) {
+                for (var i in markers) {
+                    var markerID = markers[i].options.title;
+                    if (markerID == id) {
+                        markers[i].openPopup();
+                    };
+                }
+            }
+
+            var legend = L.control({ position: 'topright' });
+
+            legend.onAdd = function (map) {
+
+                var div = L.DomUtil.create('div', 'info legend'),
+                    grades = ['Bez alarma', 'Alarm'],
+                    labels = [];
+
+
+                for (var i = 0; i < grades.length; i++) {
+                    labels.push(
+                        '<i style="background:' + getColor(grades[i]) + '"></i>' +
+                        grades[i]);
+                }
+
+                div.innerHTML = labels.join('<br>');
+                return div;
+            };
+
+            legend.addTo(map);
+
+
+            function getColor(d) {
+                return d == 'Bez alarma' ? '#46b600' :
+                    d == 'Izvan mreže' ? 'gray' :
+                    d == 'Alarm' ? '#da241a' :
+
+                        d == 'Excellent' ? 'green' :
+                            d == 'Good' ? 'yellow' :
+                                d == 'Fair' ? 'orange' :
+                                    d == 'Poor' ? 'red' :
+                                        d == 'Unknow' ? 'gray' :
+                                            d == '< 5%' ? 'red' :
+                                                d == '< 10%' ? 'yellow' :
+                                                    d == '< 20%' ? 'orange' :
+                                                        d == '20 - 100%' ? 'green' :
+                                                            d == 'External Power' ? 'blue' :
+                                                                d == 'Unable to measure' ? 'black' :
+                                                                    '#FFEDA0';
+            }
+
+        var updateMap = function (locationId, alarmCount, eventCreationTime, guid) {
+            //markersGroup.clearLayers();
+
+            var countAlarm = 0;
+            var iconList = [];
+            var markers = [];
+            var location = locationJson.find(x => x.id === locationId);
+            //console.log(location);
+
+
+            var lat = location.lat;
+            var lon = location.long;
+            var eventTime = 0;
+            var markerLocation = new L.LatLng(lat, lon);
+
+            var _css = "";
+            var _msg = "";
+
+            var singleMarker = {};
+            singleMarker['id'] = location.id;
+            singleMarker['lat'] = lat;
+            singleMarker['lon'] = lon;
+            singleMarker['name'] = location.name;
+            singleMarker['cntAlarm'] = location.alarmCount;
+
+
+
+            location.id = locationId;
+            singleMarker['id'] = location.id;
+            location.alarmCount = alarmCount;
+            singleMarker['cntAlarm'] = location.alarmCount;
+            eventTime = timeNumConverter(eventCreationTime);
+
+
+
+                
+            iconList.push(singleMarker);
+
+            var icon = redIcon;   // 86400000 is one day in miliseconds
+            var m = L.marker([location.lat, location.long], { title: location.name, icon: icon });//.addTo(map);
+
+            var customPopup = "<div style=\"line-height: 2rem\">" +
+                "<h2 style=\"margin:0\">" + (location.name != null ? location.name : "No name") + "</h2>" +
+                (location.alarmCount > 0 ? "<br><b>Vrijeme: </b><span class=\"\">" + eventTime : "") + "</span>" +
+                (location.alarmCount > 0 ? "<br><b>Broj alarma: </b><span class=\"\">" + location.alarmCount : "Bez alarma") + "</span>" +
+                //"<br><input class=\"btn btn-sm btn-primary\" style=\"max-width: 10vw\" type=\"button\" value=\"Lokacija\" onclick=\"window.open('./Location/LocationDetails/' + locationationId, '_self');\"></button>" +
+                "<br><input class=\"btn btn-default\" style=\"max-width: 10vw\" type=\"button\" value=\"Lokacija\" onclick=\"window.open(\'" + './Location/LocationDetails/' + location.id + "\', true)\"></button>" +
+                (location.alarmCount > 0 ? "<input class=\"btn btn-default\" style=\"max-width: 10vw\" type=\"button\" value=\"Detalji\" onclick=\"window.open(\'" + './MV/EventsDetails?guid=' + guid + "\', true)\"></button>" : "") +
+                "</div>";
+
+
+            console.log('crveni pin live');
+            console.log(locationId);
+
+            m.bindPopup(customPopup, customOptions);
+            markers.push(m);
+            markersGroup.addLayer(m);
+            markersGroup.addTo(map);
+        }
+
+        var i = 0;
+
+        var onChange = function (id, eventCreationTime, alarmCount, locationId, guid, moveeEventFrameId ) {
+
+            //console.log(locIdsList);
+            if (locIdsList.includes(locationId)) {
+                
+                //console.log(locIdsList);
+                var locationName = $.grep(locationJson, function (p) { return p.id == locationId; })
+                    .map(function (p) { return p.name; });
+
+                var eventTime = timeNumConverter(eventCreationTime);
+
+                $('#eventTable tbody')
+                    .prepend('<tr>')
+                    .children('tr:first')
+                    .append('<td scope="col">' + moveeEventFrameId + '</td>')
+                    .append('<td scope="col">' + timeNumConverter(eventCreationTime) + '</td>')
+                    .append('<td><a href="' +'./Location/LocationDetails/' + locationId + '">'+ locationName +'</a></td >')
+                    .append('<td scope="col">' + 'Novi' + '</td>')
+                    .append("<td><input class=\"btn btn-default\" style=\"max-width: 10vw\" type=\"button\" value=\"Detalji\" onclick=\"window.open(\'" + './MV/EventsDetails?guid=' + guid + "\', true)\"></td>")
+                    ;
+                playAudio();
+                myShowFunction();
+                updateMap(locationId, alarmCount, eventCreationTime, guid);
+                Msg2();
+                //console.log('id');
+                //console.log(id);
+                //console.log('eventCreationTime');
+                //console.log(eventCreationTime);
+                //console.log('alarmCount');
+                //console.log(alarmCount);
+                //console.log('locationId');
+                //console.log(locationId);
+                //console.log('guid');
+                //console.log(guid);
+                //console.log('moveeEventFrameId');
+                //console.log(moveeEventFrameId);
+
+            }
+            
+        }
+
+    </script>
+
+    <script>
+        function Msg2() {
+            document.getElementById('alarmTagCount').innerHTML = +num + +1;
+            num++;
+        }
+
+    </script>
+
+}

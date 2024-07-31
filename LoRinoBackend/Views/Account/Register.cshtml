@@ -1,0 +1,94 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore;
+@using System.Data;
+@inject SignInManager<ApplicationUser> signInManager
+@inject IAuthorizationService authorizationService;
+@inject UserManager<ApplicationUser> UserManager
+@model RegisterViewModel
+
+@{
+    //Layout = "~/Views/Shared/_Layout_login.cshtml";
+    ViewData["Title"] = "Register";
+}
+
+@{
+    ViewBag.Title = "Registracija korisnika";
+}
+<h2>
+    @ViewData["Title"]
+</h2>
+<!-- Outer Row -->
+<div class="row justify-content-center">
+
+    <div class="col-xl-10 col-lg-12 col-md-9">
+        <div class="card o-hidden border-0 shadow-lg my-5">
+            <div class="card-body p-0">
+                <!-- Nested Row within Card Body -->
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="p-5">
+                            <div class="text-center">
+                                <h1 class="h4">Registracija korisnika</h1>
+                            </div>
+                            <form method="post">
+                                <div asp-validation-summary="All" class="text-danger"></div>
+                                <div class="form-group">
+                                    <label asp-for="FirstName"></label>
+                                    <input asp-for="FirstName" class="form-control" />
+                                    <span asp-validation-for="FirstName" class="text-danger"></span>
+                                </div>
+                                <div class="form-group">
+                                    <label asp-for="LastName"></label>
+                                    <input asp-for="LastName" class="form-control" />
+                                    <span asp-validation-for="LastName" class="text-danger"></span>
+                                </div>
+                                <div class="form-group">
+                                    <label asp-for="Email"></label>
+                                    <input asp-for="Email" class="form-control" />
+                                    <span asp-validation-for="Email" class="text-danger"></span>
+                                </div>
+                                <div class="form-group">
+                                    <label asp-for="Password"></label>
+                                    <input asp-for="Password" class="form-control" />
+                                    <span asp-validation-for="Password" class="text-danger"></span>
+                                </div>
+                                <div class="form-group">
+                                    <label asp-for="ConfirmPassword"></label>
+                                    <input asp-for="ConfirmPassword" class="form-control" />
+                                    <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                                </div>
+
+
+
+
+                                <div class="form-group row">
+                                    <label asp-for="CompanyList" class="col-sm-2 col-form-label"></label>
+                                    <div class="col-sm-10">
+                                        <select asp-for="CompanyId" class="custom-select mr-sm-2" asp-items="Model.CompanyList">
+                                            <option value="">Please Select</option>
+                                        </select>
+                                        <span asp-validation-for="CompanyId" class="text-danger"></span>
+                                    </div>
+                                </div>
+
+                                @*<div class="form-group row">
+                                    <label asp-for="LocationList" class="col-sm-2 col-form-label"></label>
+                                    <div class="col-sm-10">
+                                        <select asp-for="LocationId" class="custom-select mr-sm-2" asp-items="Model.LocationList">
+                                            <option value="">Please Select</option>
+                                        </select>
+                                        <span asp-validation-for="LocationId" class="text-danger"></span>
+                                    </div>
+                                </div>*@
+
+
+                                <button type="submit" class="btn btn-default" style="width:auto">Registriraj</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

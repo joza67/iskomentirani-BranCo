@@ -1,0 +1,190 @@
+﻿@model IEnumerable<MoveeDataFrame>
+@using LoRinoBackend.Functions;
+@using Microsoft.EntityFrameworkCore;
+@inject UserManager<ApplicationUser> userManager
+@inject IDeviceRepository device
+@inject IMoveeEventRepository eventRepo
+
+@{ ViewBag.Title = "BranCo"; }
+
+@functions{
+
+    public string findUser(string id)
+    {
+        var userName = "";
+        ApplicationUser user = userManager.Users.Include(x => x.Company).FirstOrDefault(e => e.Id == id);
+        if (user != null)
+        {
+            userName = user.FirstName + " " + user.LastName;
+        }
+        return userName;
+
+    }
+}
+@{
+    var currentUserId = Context.User.Identity.Name;
+    ApplicationUser currentUser = userManager.Users.Include(x => x.Company).SingleOrDefaultAsync(x => x.UserName == currentUserId).Result;
+    List<int> ids = new List<int>();
+    var allDevices = device.GetMineDevice(currentUser.Company.Id);
+    List<string> devIds = new List<string>();
+    
+    Dictionary<string, string> devNames = new Dictionary<string, string>();
+
+    foreach (var dev in allDevices)
+    {
+        devIds.Add(dev.DevEui);
+        devNames.Add(dev.DevEui, dev.Name);
+    }
+}
+
+@{
+    var currentId = Convert.ToString(ViewContext.RouteData.Values["id"]);
+
+    var cssValue1 = currentId == "active" || currentId == "" ? "active" : "";
+    var cssValue2 = currentId == "all" ? "active" : "";
+    var cssValue3 = currentId == "confirmed" ? "active" : "";
+    var cssValue4 = currentId == "info" ? "active" : "";
+
+}
+
+<div class="container-fluid">
+    <div class="row mb-5">
+        @*<div class="col-12 mt-3">
+            <div class="float-left">
+                <div id="signalStatus" class="btn-circle float-right bg-danger ml-2"></div>
+            </div>
+            <form method="post" asp-action="setAckAll">
+                <div class="text-right" style="position:relative">
+                    <span id="deleteSpan" style="width: max-content; text-align: right; position: absolute; right: 0">
+                        @{if (currentId == "active" || currentId == "")
+                            {
+                                @Html.Raw("<button type='button' id='deleteButton' class='btn btn-default btn-delete' style='width: auto'>Potvrdi sve</button>");
+                            }
+                        }
+
+                    </span>
+                    <span class="deleteSpanConfirm">
+                        <button type="button" class="btn btn-default" style="width: auto" onclick="setAckAll(ids)">Da</button>
+                        <button type="button" class="btn btn-default" id="deleteCancel" style="width: auto; background: darkgreen">Ne</button>
+                    </span>
+                </div>
+            </form>
+        </div>*@
+
+    </div>
+    <div class="row mb-5">
+        <a class="nav-link @cssValue1" asp-controller="MV" asp-action="EventList" asp-route-id="active">Aktivni</a>
+        <a class="nav-link @cssValue2" asp-controller="MV" asp-action="EventList" asp-route-id="all">Svi</a>
+        <a class="nav-link @cssValue3" asp-controller="MV" asp-action="EventList" asp-route-id="confirmed">Potvrđeno</a>
+        @if (User.IsInRole("Super Admin"))
+        {
+            <a class="nav-link @cssValue4" asp-controller="MV" asp -action="EventList" asp-route-id="info">Info</a>
+        }
+    </div>
+    <table class="table" id="eventTable">
+        <thead>
+            <tr>
+                <th scope="col">Datum i vrijeme</th>
+                <th scope="col">Naziv</th>
+
+                @if (User.IsInRole("Super Admin"))
+                {
+                    <th scope="col">Temperatura</th>
+                    <th scope="col">Baterija</th>
+                }
+                <th scope="col">Gx</th>
+                <th scope="col">Gy</th>
+                <th scope="col">Gz</th>
+                <th scope="col">Tip</th>
+                @if (currentId == "info")
+                {
+
+                }@*else
+                else if (currentId == "confirmed")
+                {
+                    <th scope = "col" class="text-center">Potvrdio</th>
+                }
+                
+                {
+                    <th scope="col" class="text-center">Akcija</th>
+                }*@
+
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var device in Model.OrderByDescending(i => i.Id))
+            {
+                ids.Add(device.Id);
+                <tr id="row_@device.Id" class="rowId">
+                <td scope="col">@device.RecvTime.ToDateTime()</td>
+                <td scope="col">@device.Device.Name</td>
+                @if (User.IsInRole("Super Admin"))
+                {
+                    <td scope="col">@device.Temperature °C</td>
+                    <td scope="col">@Math.Round(device.Battery, 2) V</td>
+
+                }
+                <td scope="col">@device.Gx</td>
+                <td scope="col">@device.Gy</td>
+                <td scope="col">@device.Gz</td>
+                <td scope="col">@Html.Raw(device.DataType == 4 ? "<span class='text-danger'>Alarm</span>" : "<span class='text-success'>Na mreži</span>")</td>
+                @*
+        <td scope="col" class="text-center" id="cell_@device.Id">@Html.Raw(currentId == "all" ? (device.DataType == 4 ? (device.AckMsg == true ? "<button type='button' class='btn btn-success' onclick=\"setAckSingleCell(" + device.Id + ", false)\">Aktiviraj</button>" : "<button class='btn btn-default btn-acknowledge' type='button' onclick=\"setAckSingleCell(" + device.Id + ", true)\">Potvrdi</button>") : "") : (device.DataType == 4 ? (device.AckMsg == true ? "<button type='button' class='btn btn-success' onclick=\"setAckSingle(" + device.Id + ", false)\">Aktiviraj</button>" : "<button class='btn btn-default btn-acknowledge' type='button' onclick=\"setAckSingle(" + device.Id + ", true)\">Potvrdi</button>") : ""))</td
+                
+                @if (currentId != "info")
+                {
+                    <td scope="col" class="text-center" id="cell_@device.Id">@Html.Raw(currentId == "all" ? (device.DataType == 4 ? (device.AckMsg == true ? findUser(device.AckId) + "<br>" + @UnixTimeStampToDateTime(device.AckTime / 1000) : "") : "") : (device.DataType == 4 ? (device.AckMsg == true ? findUser(device.AckId) + "<br>" + @UnixTimeStampToDateTime(device.AckTime / 1000) : "") : ""))</td>
+                }*@
+            </tr>
+
+            }
+        </tbody>
+    </table>
+
+    @if (!Model.Any())
+    {
+        <h2 class="data-info" id="dataInfo">-</h2>
+    }
+    else
+    {
+        <h1 class="data-info hide" id="dataInfo">-</h1>
+    }
+</div>
+
+@section Styles {
+    <style>
+
+        .btn-delete {
+            position: relative;
+            z-index: 10;
+        }
+
+        .data-info {
+            color: darkgreen;
+            font-weight: bold;
+        }
+
+        .hide {
+            display: none;
+        }
+
+        .show {
+            display: block;
+        }
+
+        .deleteSpanConfirm {
+            position: absolute;
+            right: 120px;
+            margin-left: 2em;
+            text-align: center;
+            display: inline-block;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: transform 0.6s ease;
+        }
+
+        .rowId {
+            transition: transform 0.6s ease, height 0.5s linear;
+        }
+    </style>
+}

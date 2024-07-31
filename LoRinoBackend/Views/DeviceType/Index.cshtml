@@ -1,0 +1,33 @@
+﻿@model IEnumerable<DeviceType>
+
+@{
+    ViewBag.Title = "Device Types";
+}
+
+<div class="row">
+
+        @foreach (var deviceType in Model)
+        {
+            var photoPath = "~/Images/Devices/" + (deviceType.PhotoPath ?? "no-photo.png");
+            <div class="col-lg-3">
+                <div class="card m-3">
+                    <div class="card-header">
+                        <h4 class="text-nowrap">@deviceType.Name</h4>
+                    </div>
+                    <div class="card-body">
+                        <img class="card-img-top mt-1 mb-1 rounded mx-auto d-block imgThumbnail" src="@photoPath" asp-append-version="true" />
+                    </div>
+                    <div class="card-footer text-center">
+                        <a asp-controller="DeviceType" asp-action="Details" asp-route-id="@deviceType.Id" class="btn btn-default m-1">View</a>
+                        <a asp-controller="DeviceType" asp-action="Edit" asp-route-id="@deviceType.Id" class="btn btn-default m-1">Edit</a>
+                    </div>
+                </div>
+            </div>
+        }
+   
+</div>
+
+
+@section Scripts {
+    <script src="~/js/CustomScript.js"></script>
+}

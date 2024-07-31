@@ -1,0 +1,62 @@
+﻿@model UserDetailsViewModel
+
+@{
+    ViewBag.Title = "Detalji";
+    var photoPath = "~/Images/Company/" + (Model.Company.PhotoPath ?? "no-photo.png");
+}
+
+
+
+<div class="row justify-content-center m-3">
+    <div class="col-sm-12">
+        <div class="card">
+            <div class="card-header">
+                <h3>@Model.UserName</h3>
+            </div>
+
+            <div class="card-body col-sm-12 row">
+                <div class="col-sm-3">
+                    <img class="img-profile col-sm-12" style="max-width: 24vh;" src="@photoPath" asp-append-version="true" />
+
+                    <h4 class="ml-3 mt-4">@Model.Company.Name</h4>
+                    <h4 class="ml-3 mt-2">@Model.Company.Email</h4>
+                    <h4 class="ml-3 mt-2">@Model.Company.Street</h4>
+                    <h4 class="ml-3 mt-2">@Model.Company.City</h4>
+                    <h4 class="ml-3 mt-2">@Model.Company.Country</h4>
+                </div>
+                <div class="col-sm-9 border-left-primary">
+                    <h4>Korisničke informacije:</h4>
+                    <hr />
+                    <h5>Jedinstveni ID : <span class="text-primary">@Model.Id</span> </h5>
+                    <h5>Ime : <span class="text-primary">@Model.FirstName</span> </h5>
+                    <h5>Prezime : <span class="text-primary">@Model.LastName</span> </h5>
+                    <h5>E-pošta : <span class="text-primary">@Model.Email</span> </h5>
+                    <h5>Ulica : <span class="text-primary">@Model.Street</span> </h5>
+                    <h5>Grad : <span class="text-primary">@Model.City</span> </h5>
+                    <h5>Država : <span class="text-primary">@Model.Country</span> </h5>
+
+
+
+                </div>
+            </div>
+            <div class="card-footer text-center">
+                <form method="post" asp-action="DeleteUserPhoto" asp-route-id="@Model.Id">
+                    <a asp-controller="Administration" asp-action="ListUsers" class="btn btn-default">Nazad</a>
+                    <a asp-controller="Administration" asp-action="EditUser" asp-route-id="@Model.Id" class="btn btn-default m-1">Uredi</a>
+                    <span id="deleteSpan_@Model.Company.Id">
+                        <button type="submit" class="btn btn-default" style="width:auto">Izbriši sliku</button>
+                    </span>
+                </form>
+                <form method="post" asp-action="DeleteUser" asp-route-id="@Model.Id">
+                    <span id="deleteSpan_@Model.Id">
+                        <button type="submit" class="btn btn-default" style="width:auto">Izbriši korisnika</button>
+                    </span>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/CustomScript.js"></script>
+}

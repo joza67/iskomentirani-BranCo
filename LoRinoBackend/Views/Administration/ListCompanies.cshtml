@@ -1,0 +1,113 @@
+﻿@model IEnumerable<Company>
+
+@{
+    ViewBag.Title = "Tvrtke";
+    @ViewBag.CustomMessage
+}
+
+
+<div class="row">
+    <div class="col-12 mb-3 fa-pull-right">
+        <a asp-controller="Administration" asp-action="CreateCompany" class="btn btn-default btn-sm " style="width:auto">Dodaj novu tvrtku</a>
+    </div>
+</div>
+
+
+@if (Model.Any())
+{
+    <table class="table">
+        <thead>
+            <tr>
+                @if (User.IsInRole("Super Admin"))
+                {
+                    <th class="col-1">
+                        @Html.DisplayNameFor(model => model.Id)
+                    </th>
+                }
+                <th class="col-1">
+                    @Html.DisplayNameFor(model => model.Name)
+                </th>
+                <th class="col-1">
+                    @Html.DisplayNameFor(model => model.Email)
+                </th>
+                <th class="col-1">
+                    @Html.DisplayNameFor(model => model.Street)
+                </th>
+                <th class="col-1">
+                    @Html.DisplayNameFor(model => model.City)
+                </th>
+                <th class="col-1">
+                    @Html.DisplayNameFor(model => model.Country)
+                </th>
+                <th class="col-1">
+                    @Html.DisplayNameFor(model => model.PhotoPath)
+                </th>
+                <th class="col-1"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                var photoPath = "~/Images/Company/" + (item.PhotoPath ?? "no-photo.png");
+                <tr>
+                    @if (User.IsInRole("Super Admin"))
+                    {
+                        <td>@Html.DisplayFor(modelItem => item.Id)</td>
+                    }
+                    <td>@Html.DisplayFor(modelItem => item.Name)</td>
+                    <td>@Html.DisplayFor(modelItem => item.Email)</td>
+                    <td>@Html.DisplayFor(modelItem => item.Street)</td>
+                    <td>@Html.DisplayFor(modelItem => item.City)</td>
+                    <td>@Html.DisplayFor(modelItem => item.Country)</td>
+                    <td><img src="@photoPath" asp-append-version="true" width=200 /></td>
+                    <td>
+                        <form method="post" asp-action="CompanyDelete" asp-route-id="@item.Id">
+                            <a asp-controller="Administration" asp-action="CompanyEdit"
+                       asp-route-id="@item.Id" class="btn btn-default">Uredi</a>
+                            <a asp-controller="Administration" asp-action="CompanyDetails"
+                       asp-route-id="@item.Id" class="btn btn-default">Detalji</a>
+
+                            <span id="confirmDeleteSpan_@item.Id" style="display:none">
+                                <span>Jeste li sigurni?</span>
+                                <button type="submit" class="btn btn-default">Potvrdi</button>
+                                <a href="#" class="btn btn-default"
+                           onclick="confirmDelete('@item.Id', false)">Odustani</a>
+                            </span>
+
+                            <span id="deleteSpan_@item.Id">
+                                <a href="#" class="btn btn-default"
+                           onclick="confirmDelete('@item.Id', true)">Delete</a>
+                            </span>
+                        </form>
+                    </td>
+                </tr>
+
+            }
+        </tbody>
+    </table>
+
+
+}
+else
+{
+    <div class="row">
+        <div class="card">
+            <div class="card-header">
+                Još nije stvorena niti jedna lokacija.
+            </div>
+            @if (User.IsInRole("Super Admin"))
+            {
+                <div class="card-body">
+                    <h5 class="card-title">
+                        Stvori novu lokaciju pritiskom na gumb
+                    </h5>
+
+                </div>
+            }
+        </div>
+    </div>
+
+}
+@section Scripts {
+    <script src="~/js/CustomScript.js"></script>
+}

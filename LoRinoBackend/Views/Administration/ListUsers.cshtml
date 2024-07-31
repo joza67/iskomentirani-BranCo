@@ -1,0 +1,95 @@
+﻿@model IEnumerable<ApplicationUser>
+
+@{
+    ViewBag.Title = "Korisnici";
+    @if(ViewBag.Deleted != null)
+    {
+        <div class="alert alert-success">
+            <strong>@ViewBag.Deleted</strong>
+        </div>
+    }
+}
+
+
+@if (Model.Any())
+{
+    <a asp-action="Register" asp-controller="Account"
+       class="btn btn-default mb-3" style="width:auto">
+        Dodaj novog korisnika
+    </a>
+    <table class="table">
+        <thead>
+            <tr>
+                <th class="col-1">Ime i prezime</th>
+                <th class="col-1">@Html.DisplayNameFor(model => model.Email)</th>
+                <th class="col-1">Email potvrđen</th>
+                <th class="col-1">Tvrtka</th>
+                <th class="col-1"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.OrderBy(a => a.Email))
+            {
+                <tr>
+                    <td>@item.FirstName @item.LastName</td>
+                    <td>@Html.DisplayFor(modelItem => item.Email)</td>
+                    <td>@(
+                    item.EmailConfirmed ? "Da" : "Ne"
+                    )</td>
+                    <td>@Html.DisplayFor(modelItem => item.Company.Name)</td>
+                    <td>
+                        @{
+                            if (!item.EmailConfirmed)
+                            {
+                                <form method="post" asp-controller="Administration" asp-action="SendMailAgain" asp-route-id="@item.Id">
+                                    <button type="submit" class="btn btn-default" name="email">Pošalji mail za potvrdu</button>
+                                </form>
+                            }
+                        }
+                        <form method="post" asp-action="DeleteUser" asp-route-id="@item.Id">
+                            <a asp-controller="Administration" asp-action="UserDetails"
+                   asp-route-id="@item.Id" class="btn btn-default">Detalji</a>
+                            <a asp-controller="Administration" asp-action="Edituser"
+                   asp-route-id="@item.Id" class="btn btn-default">Uredi</a>
+
+                            <span id="confirmDeleteSpan_@item.Id" style="display:none">
+                                <span>Jeste li sigurni?</span>
+                                <button type="submit" class="btn btn-default">Potvrdi</button>
+                                <a href="#" class="btn btn-default"
+                       onclick="confirmDelete('@item.Id', false)">Odustani</a>
+                            </span>
+
+                            <span id="deleteSpan_@item.Id">
+                                <a href="#" class="btn btn-default"
+                       onclick="confirmDelete('@item.Id', true)">Izbriši</a>
+                            </span>
+                        </form>
+
+                    </td>
+                </tr>
+            }
+
+        </tbody>
+    </table>
+}
+else
+{
+    <div class="card">
+        <div class="card-header">
+            Još nije stvoren nijedan korisnik
+        </div>
+        <div class="card-body">
+            <h5 class="card-title">
+                Kreiraj novog korisnika pritiskom na gumb ispod
+            </h5>
+            <a class="btn btn-default" style="width:auto"
+               asp-controller="Account" asp-action="Register">
+                Dodaj novog korisnika
+            </a>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script src="~/js/CustomScript.js"></script>
+}

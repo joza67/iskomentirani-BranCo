@@ -1,0 +1,44 @@
+﻿@model LoRinoBackend.Models.MoveeTag
+
+@{
+    ViewData["Title"] = "CreateMoveeTag";
+}
+
+<div class="row justify-content-center">
+
+    <div class="col-xl-10 col-lg-12 col-md-12">
+        <div class="card o-hidden border-0 shadow-lg my-5">
+            <div class="card-body p-0">
+                <!-- Nested Row within Card Body -->
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="p-5">
+
+                                <h4>Novi tag</h4>
+
+        <form asp-action="Create" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Active" value="@ViewBag.Active" />
+            <div class="form-group">
+                <label asp-for="Name" class="control-label"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <a asp-action="Index" class="btn btn-default">Natrag</a>
+                <input type="submit" value="Stvori" class="btn btn-default" />
+            </div>
+        </form>
+    </div>
+</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+@section Scripts {
+    <script src="~/js/CustomScript.js"></script>
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

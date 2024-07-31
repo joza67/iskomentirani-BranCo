@@ -1,0 +1,28 @@
+﻿@model LocationUser
+@{
+    ViewData["Title"] = "Create";
+}
+
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="UserId" value="@ViewBag.UserId" />
+            <div class="form-group">
+                <label asp-for="LocationId" class="control-label"></label>
+                <select asp-for="LocationId" class="form-control" asp-items="@ViewBag.Locations"></select>
+                <span asp-validation-for="LocationId" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Stvori" class="btn btn-default" />
+            </div>
+        </form>
+    </div>
+</div>
+<div>
+    <a asp-action="Index" asp-route-userId="@ViewBag.UserId">Natrag</a>
+</div>
+@section Scripts {
+    <script src="~/js/CustomScript.js"></script>
+}

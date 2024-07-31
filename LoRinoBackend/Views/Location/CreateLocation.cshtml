@@ -1,0 +1,207 @@
+﻿@model LocationCreateViewModel
+@{ 
+    ViewBag.Title = "Create Location"; 
+
+}
+
+<!-- Outer Row -->
+<div class="row justify-content-center">
+
+    <div class="col-xl-10 col-lg-12 col-md-9">
+        <div class="card o-hidden border-0 shadow-lg my-5">
+            <div class="card-body p-0">
+                <!-- Nested Row within Card Body -->
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="p-5">
+                            <div class="text-center">
+                                <h4>Stvorite novu lokaciju</h4>
+                            </div>
+                            <form enctype="multipart/form-data" asp-controller="Location" asp-action="CreateLocation" method="post" class="mt-3">
+                                @*<input type="hidden" asp-for="CompanyId" value="@Model.CompanyId" />*@
+                                <div class="form-group row">
+                                    <label asp-for="Name" class="col-sm-2 col-form-label">Naziv *</label>
+                                    <div class="col-sm-10"><input class="form-control" asp-for="Name" placeholder="Naziv" /><span asp-validation-for="Name" class="text-danger"></span></div>
+                                </div>
+                                <div class="form-group row">
+                                    <label asp-for="Road" class="col-sm-2 col-form-label">Prometnica *</label>
+                                    <div class="col-sm-10"><input class="form-control" asp-for="Road" placeholder="Prometnica" /><span asp-validation-for="Road" class="text-danger"></span></div>
+                                </div>
+                                <div class="form-group row">
+                                    <label asp-for="RoadSection" class="col-sm-2 col-form-label">Dionica *</label>
+                                    <div class="col-sm-10"><input class="form-control" asp-for="RoadSection" placeholder="Dionica" /><span asp-validation-for="RoadSection" class="text-danger"></span></div>
+                                </div>
+                                <div class="form-group row">
+                                    <label asp-for="TimerLenght" class="col-sm-2 col-form-label">Vrijeme sakupljanja alarma *</label>
+                                    <div class="col-sm-10"><input class="form-control" asp-for="TimerLenght" placeholder="Vrijeme sakupljanja alarma u sekundama" /><span asp-validation-for="TimerLenght" class="text-danger"></span></div>
+                                </div>
+
+                                <div class="form-group row">
+
+                                    <div class="col-6">
+                                        <div class="form-group row">
+                                            <div class="col-sm-4"></div>
+                                            <div class="col-sm-8 text-info">Odaberi lokaciju klikom na kartu ili unesi kordinate</div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <label asp-for="Latitude" class="col-sm-4 col-form-label">Geo. širina *</label>
+                                            <div class="col-sm-8"><input class="form-control" asp-for="Latitude" placeholder="Geo. širina" /><span asp-validation-for="Latitude" class="text-danger"></span></div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <label asp-for="Longitude" class="col-sm-4 col-form-label">Geo. dužina *</label>
+                                            <div class="col-sm-8"><input class="form-control" asp-for="Longitude" placeholder="Geo. dužina" /><span asp-validation-for="Longitude" class="text-danger"></span></div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <label asp-for="MapZoom" class="col-sm-4 col-form-label">Zoom na karti *</label>
+                                            <div class="col-sm-8"><input class="form-control" asp-for="MapZoom" placeholder="Prikaz zooma na karti" /><span asp-validation-for="MapZoom" class="text-danger"></span></div>
+                                        </div>
+                                        @if (User.IsInRole("Super Admin"))
+                                        {
+                                            <div class="form-group row">
+                                                <label asp-for="Company.Name" class="col-sm-4 col-form-label">Naziv Tvrtke *</label>
+                                                <div class="col-sm-8">
+                                                    <select asp-for="CompanyId" class="custom-select mr-sm-2" asp-items="Model.CompaniesDDL"></select>
+                                                    <span asp-validation-for="CompanyId" class="text-danger"></span>
+                                                </div>
+                                            </div>
+                                        }
+                                        
+                                    </div>
+                                    <div class="col-6">
+                                        <div id="map" style="height : 250px; border: 1px solid grey"></div>
+                                    </div>
+                                </div>
+
+
+                                <div lass="form-group row">
+                                    <button class="btn btn-default" type="submit">Spremite </button>
+                                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                                </div>
+
+                            </form>
+                        </div>
+                    </div>
+                   
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles{
+    <link rel="stylesheet" href="~/lib/leaflet/leaflet.css" />
+    <link rel="stylesheet" href="~/lib/leaflet/Control.FullScreen.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap-datepicker/css/bootstrap-datepicker.css" />
+    <link rel="stylesheet" href="~/css/MarkerCluster.css" />
+    <link rel="stylesheet" href="~/css/MarkerCluster.Default.css" />
+    <style>
+        #map {
+            cursor: crosshair
+        }
+    </style>
+}
+
+@section Scripts {
+
+
+    <script src="~/lib/leaflet/leaflet.js"></script>
+    <script src="~/js/leaflet-color-markers.js"></script>
+    <script src="~/js/CustomScript.js"></script>
+
+    <script src="~/js/leaflet.markercluster-src.js"></script>
+    <script src="~/lib/leaflet/Control.FullScreen.js"></script>
+
+    <script src="~/lib/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
+
+    <script src="~/lib/bootstrap-datepicker/locales/bootstrap-datepicker.hr.min.js"></script>
+
+    <script>
+
+        var mapCenter = [45.767961, 15.941137];
+        var mymap = L.map('map', {
+            center: mapCenter,
+            zoom: 6
+        });
+
+
+        L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+            attribution: 'Powered by <a href="http://www.microlink.hr" > Micro-Link</a>',
+            maxZoom: 20,
+            id: 'mapbox/streets-v11',
+            tileSize: 512,
+            zoomOffset: -1,
+            accessToken: 'pk.eyJ1IjoianVrYTk3IiwiYSI6ImNrdTZxcng5eTN2c2IycHF0cnE1Zno5cHcifQ.gfrbRhNsX6XJOZywD-kSSw'
+        }).addTo(mymap);
+
+        L.control.fullscreen().addTo(mymap);
+
+        var marker = L.marker(mapCenter).addTo(mymap);
+        var updateMarker = function (lat, lng) {
+            marker
+                .setLatLng([lat, lng])
+            //.bindPopup("Your location :  " + marker.getLatLng().toString())
+            //.openPopup();
+            return false;
+        };
+
+        mymap.on('click', function (e) {
+            $('#Latitude').val(String(e.latlng.lat.toFixed(6)));
+            $('#Longitude').val(String(e.latlng.lng.toFixed(6)));
+            updateMarker(e.latlng.lat, e.latlng.lng);
+        });
+
+        mymap.on('zoomend', function () {
+
+            $('#MapZoom').val(String(mymap.getZoom()));
+
+        });
+
+
+
+        var updateMarkerByInputs = function () {
+            console.log($('#Long'), $('#Lat'));
+            return updateMarker($('#Latitude').val(), $('#Longitude').val());
+        }
+        $('#Longitude').on('input', updateMarkerByInputs);
+        $('#Latitude').on('input', updateMarkerByInputs);
+
+       const zoomField = document.getElementById('MapZoom');
+
+
+          // Add your map layers and other configurations here...
+
+          // Set up an event listener for when the textbox value changes
+          zoomField.addEventListener('input', function() {
+            // Get the value from the textbox and parse it as a number
+            var zoomValue = parseInt(zoomField.value);
+            if (isNaN(zoomValue)) return; // Exit if the value is not a number
+
+            // Check that the zoom value is within the valid range for your map
+            const maxZoom = mymap.getMaxZoom();
+            const minZoom = mymap.getMinZoom();
+            if (zoomValue < minZoom || zoomValue > maxZoom) return;
+
+            // Set the new zoom level and optionally animate the zoom
+            mymap.flyTo(marker.getLatLng(), zoomValue, {
+              duration: 1.5, // Animation duration in seconds
+              easeLinearity: 0.5, // Animation smoothness
+            });
+          });
+
+
+        $(document).ready(function () {
+            $('.custom-file-input').on("change", function () {
+                var fileName = $(this).val().split("\\").pop();
+                $(this).next('.custom-file-label').html(fileName);
+            });
+        });
+
+        $(document).ready(function () {
+            $('.custom-file-input').on("change", function () {
+                var fileName = $(this).val().split("\\").pop();
+                $(this).next('.custom-file-label').html(fileName);
+            });
+        });
+
+    </script>
+}

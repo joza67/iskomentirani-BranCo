@@ -1,0 +1,149 @@
+﻿@model Device;
+
+<div class="container">
+
+    <div class="row">
+        <div class="col-12">
+            <div class="row">
+                <form asp-controller="device" asp-action="Create" method="post">
+                    <div>
+                        <label asp-for="DevEui">DevEUI</label>
+                        <input asp-for="DevEui" />
+                    </div>
+                    <div>
+                        <label asp-for="Long">Long</label>
+                        <input asp-for="Long" />
+                    </div>
+                    <div>
+                        <label asp-for="Long">Lat</label>
+                        <input asp-for="Long" />
+                    </div>
+                </form>
+                <div class="row justify-content-center m-0">
+                    <div class="col-sm-12 p-2">
+                        <div class="card shadow mb-4">
+                            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                <div class="float-left"><h6 class="m-0 font-weight-bold text-primary">Log</h6></div>
+
+
+                                <div id="signalStatus" class="btn-circle float-right bg-danger"></div>
+                            </div>
+                            <div class="card-body logWindow" id="logWindow"></div>
+                        </div>
+                    </div>
+                </div>
+
+
+                @*@using (Html.BeginForm())
+            {
+            <table align="left">
+                <tr>
+                    <td align="right">
+                        @Html.Label("DevEUI")
+                        @Html.TextBox("DevEUI")
+                    </td>
+                </tr>
+                <tr>
+                    <td align="right">
+                        @Html.Label("Long")
+                        @Html.TextBox("Long")
+                    </td>
+                </tr>
+                <tr>
+                    <td align="right">
+                        @Html.Label("Lat")
+                        @Html.TextBox("Lat")
+                    </td>
+                </tr>
+                <tr>
+                    <td align="right">
+                        @Html.Label("Expires")
+                        <input type="date" name="expires"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td align="center">
+                        <input type="submit" value="Submit" class="btn-primary" />
+                    </td>
+
+                </tr>
+
+
+            </table
+            }
+        </div>*@
+            </div>
+                    </div>
+                
+            </div>
+
+        </div>
+    </div>
+    <div class="row justify-content-center m-0">
+        <div class="col-sm-12 p-2">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <div class="float-left"><h6 class="m-0 font-weight-bold text-primary">Log</h6></div>
+
+
+                    <div id="signalStatus" class="btn-circle float-right bg-danger"></div>
+                </div>
+                <div class="card-body logWindow" id="logWindow"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+
+    <script src="~/js/chart/core.js"></script>
+    <script src="~/js/chart/charts.js"></script>
+    <script src="~/js/chart/material.js"></script>
+    <script src="~/js/chart/animated.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mc-datepicker/dist/mc-calendar.min.js"></script>
+    <script>
+        $(document).ready(function () {
+
+
+        });
+    </script>
+
+
+    <script>
+        var onChange = function (devEui, message, unixTime, fPort) {
+
+            var date = new Date(unixTime);
+
+            var msgValStr = message.substr(0, 2);
+            var msgVal = parseInt(msgValStr, 16);
+            var status = msgVal >> 7;
+
+            var date = new Date(unixTime);
+
+            var oldCnt = parseInt($("#devCount_" + devEui).text()) + 1;
+
+            $("#devCount_" + devEui).html(oldCnt++);
+
+            if (status) {
+                $("#devStat_" + devEui).html("<b><span style=\"color: red\">Open</span></b>");
+                $("#devDet_" + devEui).css("background-color", "#ffcccc");
+                $("#devDate_" + devEui).html((date.getDate() < 10 ? '0' : '') + date.getDate() + '.'
+                    + (date.getMonth() + 1 < 10 ? '0' : '') + (date.getMonth() + 1) + '.'
+                    + date.getFullYear() + '. '
+                    + date.getHours() + ':'
+                    + date.getMinutes() + ':'
+                    + date.getSeconds());
+
+                console.log("open");
+            }
+            else {
+                $("#devStat_" + devEui).html("<b><span style=\"color: green\">Close</span></b>");
+                $("#devDet_" + devEui).css("background-color", "#ffffff");
+                console.log("close");
+            }
+        }
+    </script>
+    <script src="~/js/signalr/dist/browser/signalr.js"></script>
+    <script src="~/js/wanesy.js"></script>
+}

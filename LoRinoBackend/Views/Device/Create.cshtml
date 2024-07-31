@@ -1,0 +1,259 @@
+﻿@model DeviceCreateViewModel
+@{
+    ViewBag.Title = "Create Device";
+    var deviceList = Model.Devices;
+}
+
+
+<div class="row justify-content-center">
+
+    <div class="col-xl-10 col-lg-12 col-md-12">
+        <div class="card o-hidden border-0 shadow-lg my-5">
+            <div class="card-body p-0">
+                <!-- Nested Row within Card Body -->
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="p-5">
+                            <div class="text-center">
+                                <h4>Dodajte novi uređaj na lokaciju</h4>
+                            </div>
+                            <form enctype="multipart/form-data" asp-controller="Device" asp-action="Create" method="post" class="mt-3">
+                                <input type="hidden" asp-for="LocationId" value="@Model.LocationId" />
+                                <input type="hidden" asp-for="CompanyId" value="@Model.CompanyId" />
+                                <div class="form-group row">
+                                    <label asp-for="Name" class="col-sm-2 col-form-label"></label>
+                                    <div class="col-sm-10"><input class="form-control" asp-for="Name" placeholder="Name" /><span asp-validation-for="Name" class="text-danger"></span></div>
+                                </div>
+                                <div class="form-group row">
+                                    <label asp-for="DevEui" class="col-sm-2 col-form-label"></label>
+                                    <div class="col-sm-10"><input class="form-control" asp-for="DevEui" placeholder="DevEui" /><span asp-validation-for="DevEui" class="text-danger"></span></div>
+                                </div>
+                                @if (User.IsInRole("Super Admin"))
+                                {
+                            <div class="form-group row">
+                                <label asp-for="CompanyList" class="col-sm-2 col-form-label"></label>
+                                <div class="col-sm-10">
+                                            <select asp-for="CompanyId" class="custom-select mr-sm-2" disabled asp-items="Model.CompanyList">
+                                        <option value="">Please Select</option>
+                                    </select>
+                                    <span asp-validation-for="CompanyId" class="text-danger"></span>
+                                </div>
+                            </div> }
+                                        else
+                                        {
+
+                                            foreach (var x in Model.CompanyList)
+                                            {
+                                                if (x.Value == Model.CompanyId.ToString())
+                                                {
+                            <div class="form-group row">
+                                <label asp-for="CompanyList" class="col-sm-2 col-form-label"></label>
+                                <div class="col-sm-10">
+                                    <input id="CompanyName" disabled value="@x.Text" type="text" class="form-control" />
+                                    <input id="CompanyId" value="@Model.CompanyId" type="hidden" class="form-control" />
+                                </div>
+                            </div>}
+                                            }
+                                        }
+                                @if (User.IsInRole("Super Admin"))
+                                {
+                            <div class="form-group row">
+                                <label asp-for="LocationList" class="col-sm-2 col-form-label"></label>
+                                <div class="col-sm-10">
+                                    <select asp-for="LocationId" class="custom-select mr-sm-2" disabled asp-items="Model.LocationList">
+                                        <option value="">Please Select</option>
+                                    </select>
+                                    <span asp-validation-for="LocationId" class="text-danger"></span>
+                                </div>
+                            </div> }
+                                        else
+                                        {
+
+                                            foreach (var x in Model.LocationList)
+                                            {
+                                                if (x.Value == Model.LocationId.ToString())
+                                                {
+                            <div class="form-group row">
+                                <label asp-for="LocationList" class="col-sm-2 col-form-label"></label>
+                                <div class="col-sm-10">
+                                    <input id="Name" disabled value="@x.Text" type="text" class="form-control" />
+                                    <input id="LocationId" value="@Model.LocationId" type="hidden" class="form-control" />
+                                </div>
+                            </div>}
+                                            }
+                                        }
+                                <div class="form-group row">
+                                    <label asp-for="DeviceTypeList" class="col-sm-2 col-form-label"></label>
+                                    <div class="col-sm-10">
+                                        <select asp-for="DeviceTypeId" class="custom-select mr-sm-2" asp-items="Model.DeviceTypeList">
+                                            <option value="">Please Select</option>
+                                        </select>
+                                        <span asp-validation-for="DeviceTypeId" class="text-danger"></span>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+
+                                    <div class="col-6">
+                                        <div class="form-group row">
+                                            <div class="col-sm-4"></div>
+                                            <div class="col-sm-8 text-info">Odaberi lokaciju uređaja klikom na karti ili unesi kordinate.</div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <label asp-for="Latitude" class="col-sm-4 col-form-label"></label>
+                                            <div class="col-sm-8"><input class="form-control" asp-for="Latitude" placeholder="Latitude" Text="{Binding Value, StringFormat={}{0:0.00}, Mode=TwoWay}" maxlength="10" /><span asp-validation-for="Latitude" class="text-danger"></span></div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <label asp-for="Longitude" class="col-sm-4 col-form-label"></label>
+                                            <div class="col-sm-8"><input class="form-control" asp-for="Longitude" placeholder="Longitude" Text="{Binding Value, StringFormat={}{0:0.00}, Mode=TwoWay}" maxlength="10" /><span asp-validation-for="Longitude" class="text-danger"></span></div>
+                                        </div>
+                                        <div class="form-group row">
+
+                                            <label for="licenceExpiryDate" class="col-sm-4 col-form-label">Ističe datuma</label>
+
+                                            <div class="col-sm-8"><input class="form-control" asp-for="Expires" value="@DateTime.Today.AddDays(3652).ToString("yyyy-MM-dd")" id="licenceExpiryDate"></div>
+
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div id="map" style="height : 250px; border: 1px solid grey; z-index:0"></div>
+                                    </div>
+                                </div>
+
+                                <div lass="form-group row">
+                                    <a asp-controller="Location" asp-action="LocationEdit" asp-route-id="@Model.LocationId" class="btn btn-default">Natrag</a>
+                                    <button class="btn btn-default" type="submit">Dodaj</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles{
+    <link rel="stylesheet" href="~/lib/leaflet/leaflet.css" />
+    <link rel="stylesheet" href="~/lib/leaflet/Control.FullScreen.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap-datepicker/css/bootstrap-datepicker.css" />
+    <link rel="stylesheet" href="~/css/MarkerCluster.css" />
+    <link rel="stylesheet" href="~/css/MarkerCluster.Default.css" />
+    <style>
+        #map {
+            cursor: crosshair
+        }
+    </style>
+}
+
+@section Scripts {
+
+
+    <script src="~/lib/leaflet/leaflet.js"></script>
+    <script src="~/js/leaflet-color-markers.js"></script>
+    <script src="~/js/CustomScript.js"></script>
+    <script src="~/js/leaflet.markercluster-src.js"></script>
+    <script src="~/lib/leaflet/Control.FullScreen.js"></script>
+
+    <script src="~/lib/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
+
+    <script src="~/lib/bootstrap-datepicker/locales/bootstrap-datepicker.hr.min.js"></script>
+
+    <script>
+
+        var latitude = '@Model.Location.Lat';
+        var longitude = '@Model.Location.Long';
+
+        var mapCenter = [parseFloat(latitude.replace(",", ".")), parseFloat(longitude.replace(",", "."))];
+
+        var mymap = L.map('map', {
+            center: mapCenter,
+            zoom: 18
+        });
+
+        var jsonDevices = @Html.Raw(Json.Serialize(deviceList));
+        console.log(jsonDevices);
+
+        L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+            attribution: 'Powered by <a href="http://www.microlink.hr" > Micro-Link</a>',
+            maxZoom: 20,
+            id: 'mapbox/streets-v11',
+            tileSize: 512,
+            zoomOffset: -1,
+            accessToken: 'pk.eyJ1IjoianVrYTk3IiwiYSI6ImNrdTZxcng5eTN2c2IycHF0cnE1Zno5cHcifQ.gfrbRhNsX6XJOZywD-kSSw'
+        }).addTo(mymap);
+
+        var markersGroup = L.layerGroup();
+
+        L.control.fullscreen().addTo(mymap);
+
+        var iconList = [];
+
+        var markers = [];
+        jsonDevices.forEach((el) => {
+            console.log(el);
+
+            var lat = el.lat;
+            var lon = el.long;
+            var markerLocation = new L.LatLng(lat, lon);
+
+            var singleMarker = {};
+            singleMarker['id'] = el.id;
+            singleMarker['lat'] = lat;
+            singleMarker['lon'] = lon;
+            singleMarker['name'] = el.name;
+            singleMarker['devEui'] = el.devEui;
+
+            iconList.push(singleMarker);
+
+            var icon = greenIcon;
+            var m = L.marker([el.lat, el.long], { title: el.devEui, icon: icon });
+
+            markers.push(m);
+            markersGroup.addLayer(m);
+        });
+
+        markersGroup.addTo(mymap);
+
+        var marker = L.marker(mapCenter).addTo(mymap);
+
+
+        var updateMarker = function (lat, lng) {
+            marker
+                .setLatLng([lat, lng])
+            //.bindPopup("Your location :  " + marker.getLatLng().toString())
+            //.openPopup();
+            return false;
+        };
+
+        mymap.on('click', function (e) {
+            $('#Latitude').val(String(e.latlng.lat.toFixed(6)));
+            $('#Longitude').val(String(e.latlng.lng.toFixed(6)));
+            updateMarker(e.latlng.lat, e.latlng.lng);
+        });
+
+        var updateMarkerByInputs = function () {
+            console.log($('#Long'), $('#Lat'));
+            return updateMarker($('#Latitude').val(), $('#Longitude').val());
+        }
+        $('#Longitude').on('input', updateMarkerByInputs);
+        $('#Latitude').on('input', updateMarkerByInputs);
+
+
+
+        $(document).ready(function () {
+            $('.custom-file-input').on("change", function () {
+                var fileName = $(this).val().split("\\").pop();
+                $(this).next('.custom-file-label').html(fileName);
+            });
+        });
+
+        function markerFunction(id) {
+            for (var i in markers) {
+                var markerID = markers[i].options.title;
+                if (markerID == id) {
+                    markers[i].openPopup();
+                };
+            }
+        }
+    </script>
+}

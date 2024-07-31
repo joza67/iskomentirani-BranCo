@@ -1,0 +1,207 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <AspNetCoreHostingModel>OutOfProcess</AspNetCoreHostingModel>
+    <UserSecretsId>51c0770a-8c88-4362-b3b5-a8936796ecef</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Migrations\20190428060805_InitialMigration.cs" />
+    <Compile Remove="Migrations\20190428060805_InitialMigration.Designer.cs" />
+    <Compile Remove="Migrations\20190429172047_TestMigration.cs" />
+    <Compile Remove="Migrations\20190429172047_TestMigration.Designer.cs" />
+    <Compile Remove="Migrations\20190430052340_Test.cs" />
+    <Compile Remove="Migrations\20190430052340_Test.Designer.cs" />
+    <Compile Remove="Migrations\20190430052751_SeedEmployeesTable.cs" />
+    <Compile Remove="Migrations\20190430052751_SeedEmployeesTable.Designer.cs" />
+    <Compile Remove="Migrations\20190430055132_AlterEmployeesSeedData.cs" />
+    <Compile Remove="Migrations\20190430055132_AlterEmployeesSeedData.Designer.cs" />
+    <Compile Remove="Migrations\20190503063748_AddPhotoPathToEmployees.cs" />
+    <Compile Remove="Migrations\20190503063748_AddPhotoPathToEmployees.Designer.cs" />
+    <Compile Remove="Migrations\20190503072152_AddPhotoPathToEmployees.cs" />
+    <Compile Remove="Migrations\20190503072152_AddPhotoPathToEmployees.Designer.cs" />
+    <Compile Remove="Migrations\20190504053534_AddPhotoPathColumn.cs" />
+    <Compile Remove="Migrations\20190504053534_AddPhotoPathColumn.Designer.cs" />
+    <Compile Remove="Migrations\20190504065740_AddPhotoPathColumn.cs" />
+    <Compile Remove="Migrations\20190504065740_AddPhotoPathColumn.Designer.cs" />
+    <Compile Remove="Migrations\20190504075013_AddPhotoPathColumn.cs" />
+    <Compile Remove="Migrations\20190504075013_AddPhotoPathColumn.Designer.cs" />
+    <Compile Remove="Migrations\20190601073923_AddingIdentity.cs" />
+    <Compile Remove="Migrations\20190601073923_AddingIdentity.Designer.cs" />
+    <Compile Remove="Migrations\20190626060140_Extend_IdentityUser.cs" />
+    <Compile Remove="Migrations\20190626060140_Extend_IdentityUser.Designer.cs" />
+    <Compile Remove="Migrations\20190626061953_Extend_IdentityUser.cs" />
+    <Compile Remove="Migrations\20190626061953_Extend_IdentityUser.Designer.cs" />
+    <Compile Remove="Migrations\20190807075131_Test.cs" />
+    <Compile Remove="Migrations\20190807075131_Test.Designer.cs" />
+    <Compile Remove="Migrations\20200915113603_initialMigration.cs" />
+    <Compile Remove="Migrations\20200915113603_initialMigration.Designer.cs" />
+    <Compile Remove="Migrations\20200915115325_initialMigration.cs" />
+    <Compile Remove="Migrations\20200915115325_initialMigration.Designer.cs" />
+    <Compile Remove="Migrations\20200915120108_initialMigration.cs" />
+    <Compile Remove="Migrations\20200915120108_initialMigration.Designer.cs" />
+    <Compile Remove="Migrations\20200917081217_initialMigration.cs" />
+    <Compile Remove="Migrations\20200917081217_initialMigration.Designer.cs" />
+    <Compile Remove="Migrations\20200917082017_initialMigration.cs" />
+    <Compile Remove="Migrations\20200917082017_initialMigration.Designer.cs" />
+    <Compile Remove="Migrations\20200917103540_initialMigration.cs" />
+    <Compile Remove="Migrations\20200917103540_initialMigration.Designer.cs" />
+    <Compile Remove="Migrations\20200917103724_initialMigration.cs" />
+    <Compile Remove="Migrations\20200917103724_initialMigration.Designer.cs" />
+    <Compile Remove="Migrations\20200917125828_DecodingData.cs" />
+    <Compile Remove="Migrations\20200917125828_DecodingData.Designer.cs" />
+    <Compile Remove="Migrations\20210517115339_EnlessData.cs" />
+    <Compile Remove="Migrations\20210517115339_EnlessData.Designer.cs" />
+    <Compile Remove="Migrations\20210517115505_EnlessData.cs" />
+    <Compile Remove="Migrations\20210517115505_EnlessData.Designer.cs" />
+    <Compile Remove="Migrations\20210826073034_watteco.cs" />
+    <Compile Remove="Migrations\20210826073034_watteco.Designer.cs" />
+    <Compile Remove="Migrations\20210826073147_watteco.cs" />
+    <Compile Remove="Migrations\20210826073147_watteco.Designer.cs" />
+    <Compile Remove="Migrations\20210826073309_watteco.cs" />
+    <Compile Remove="Migrations\20210826073309_watteco.Designer.cs" />
+    <Compile Remove="Migrations\20210826073617_watteco.cs" />
+    <Compile Remove="Migrations\20210826073617_watteco.Designer.cs" />
+    <Compile Remove="Migrations\20210826073936_watteco.cs" />
+    <Compile Remove="Migrations\20210826073936_watteco.Designer.cs" />
+    <Compile Remove="Migrations\20210826074851_watteco.cs" />
+    <Compile Remove="Migrations\20210826074851_watteco.Designer.cs" />
+    <Compile Remove="Migrations\20210826075058_watteco.cs" />
+    <Compile Remove="Migrations\20210826075058_watteco.Designer.cs" />
+    <Compile Remove="Migrations\20210826075942_wattecoPulse.cs" />
+    <Compile Remove="Migrations\20210826075942_wattecoPulse.Designer.cs" />
+    <Compile Remove="Migrations\20210826080025_wattecoPulse.cs" />
+    <Compile Remove="Migrations\20210826080025_wattecoPulse.Designer.cs" />
+    <Compile Remove="Migrations\20210826080440_wattecoPulse.cs" />
+    <Compile Remove="Migrations\20210826080440_wattecoPulse.Designer.cs" />
+    <Compile Remove="Migrations\20210826080921_wattecoPulse.cs" />
+    <Compile Remove="Migrations\20210826080921_wattecoPulse.Designer.cs" />
+    <Compile Remove="Migrations\20210826081434_wattecoPulse.cs" />
+    <Compile Remove="Migrations\20210826081434_wattecoPulse.Designer.cs" />
+    <Compile Remove="Migrations\20210826081757_wattecoPulse.cs" />
+    <Compile Remove="Migrations\20210826081757_wattecoPulse.Designer.cs" />
+    <Compile Remove="Migrations\20210826081846_wattecoPulse.cs" />
+    <Compile Remove="Migrations\20210826081846_wattecoPulse.Designer.cs" />
+    <Compile Remove="Migrations\20210901085512_Axioma.cs" />
+    <Compile Remove="Migrations\20210901085512_Axioma.Designer.cs" />
+    <Compile Remove="Migrations\20210929131330_movee.cs" />
+    <Compile Remove="Migrations\20210929131330_movee.Designer.cs" />
+    <Compile Remove="Migrations\20210929131538_movee_test.cs" />
+    <Compile Remove="Migrations\20210929131538_movee_test.Designer.cs" />
+    <Compile Remove="Migrations\20210929131839_movee.cs" />
+    <Compile Remove="Migrations\20210929131839_movee.Designer.cs" />
+    <Compile Remove="Migrations\20211001093954_Movee.cs" />
+    <Compile Remove="Migrations\20211001093954_Movee.Designer.cs" />
+    <Compile Remove="Migrations\20211001094550_movee.cs" />
+    <Compile Remove="Migrations\20211001094550_movee.Designer.cs" />
+    <Compile Remove="Migrations\20211011084202_device.cs" />
+    <Compile Remove="Migrations\20211011084202_device.Designer.cs" />
+    <Compile Remove="Migrations\20211015092427_deviceAndMovee.cs" />
+    <Compile Remove="Migrations\20211015092427_deviceAndMovee.Designer.cs" />
+    <Compile Remove="Migrations\20211015113511_moveeAndDevice.cs" />
+    <Compile Remove="Migrations\20211015113511_moveeAndDevice.Designer.cs" />
+    <Compile Remove="Migrations\20211015122027_moveeAndDevice.cs" />
+    <Compile Remove="Migrations\20211015122027_moveeAndDevice.Designer.cs" />
+    <Compile Remove="Migrations\20211022101714_lobaro.cs" />
+    <Compile Remove="Migrations\20211022101714_lobaro.Designer.cs" />
+    <Compile Remove="Migrations\20211022102536_lobaro.cs" />
+    <Compile Remove="Migrations\20211022102536_lobaro.Designer.cs" />
+    <Compile Remove="Migrations\20211206102552_DeviceType.cs" />
+    <Compile Remove="Migrations\20211206102552_DeviceType.Designer.cs" />
+    <Compile Remove="Migrations\20211210094949_Identity.cs" />
+    <Compile Remove="Migrations\20211210094949_Identity.Designer.cs" />
+    <Compile Remove="Migrations\20211217135444_mailList.cs" />
+    <Compile Remove="Migrations\20211217135444_mailList.Designer.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Views\Account\AccessDenied.cshtml" />
+    <None Include="Views\Account\AccountLocked.cshtml" />
+    <None Include="Views\Account\ChangePassword.cshtml" />
+    <None Include="Views\Account\ChangePasswordConfirmation.cshtml" />
+    <None Include="Views\Account\ConfirmEmail.cshtml" />
+    <None Include="Views\Account\ForgotPassword.cshtml" />
+    <None Include="Views\Account\ForgotPasswordConfirmation.cshtml" />
+    <None Include="Views\Account\Login.cshtml" />
+    <None Include="Views\Account\Login_old.cshtml" />
+    <None Include="Views\Account\Register.cshtml" />
+    <None Include="Views\Account\RegisterConfirmation.cshtml" />
+    <None Include="Views\Account\ResetPassword.cshtml" />
+    <None Include="Views\Account\RegisterConfirmation.cshtml" />
+    <None Include="Views\Account\ResetPasswordConfirmation.cshtml" />
+    <None Include="Views\Administration\AccessDenied.cshtml" />
+    <None Include="Views\Administration\CompanyDetails.cshtml" />
+    <None Include="Views\Administration\CompanyEdit.cshtml" />
+    <None Include="Views\Administration\CreateCompany.cshtml" />
+    <None Include="Views\Administration\CreateRole.cshtml" />
+    <None Include="Views\Administration\EditRole.cshtml" />
+    <None Include="Views\Administration\EditUser.cshtml" />
+    <None Include="Views\Administration\EditUsersInRole.cshtml" />
+    <None Include="Views\Administration\ListCompanies.cshtml" />
+    <None Include="Views\Administration\ListRoles.cshtml" />
+    <None Include="Views\Administration\ListUsers.cshtml" />
+    <None Include="Views\Administration\ManageUserClaims.cshtml" />
+    <None Include="Views\Administration\ManageUserRoles.cshtml" />
+    <None Include="Views\Administration\Profile.cshtml" />
+    <None Include="Views\Administration\UserDetails.cshtml" />
+    <None Include="Views\DeviceType\Create.cshtml" />
+    <None Include="Views\DeviceType\Details.cshtml" />
+    <None Include="Views\DeviceType\Edit.cshtml" />
+    <None Include="Views\DeviceType\Index.cshtml" />
+    <None Include="Views\Device\Create.cshtml" />
+    <None Include="Views\Device\Details.cshtml" />
+    <None Include="Views\Device\DeviceNotFound.cshtml" />
+    <None Include="Views\Device\Edit.cshtml" />
+    <None Include="Views\Device\Index.cshtml" />
+    <None Include="wwwroot\js\chart\deps\canvg.js" />
+    <None Include="wwwroot\js\chart\deps\canvg.js.map" />
+    <None Include="wwwroot\js\chart\deps\pdfmake.js" />
+    <None Include="wwwroot\js\chart\deps\pdfmake.js.map" />
+    <None Include="wwwroot\js\chart\deps\xlsx.js" />
+    <None Include="wwwroot\js\chart\deps\xlsx.js.map" />
+    <None Include="wwwroot\js\chart\plugins\annotation.js" />
+    <None Include="wwwroot\js\chart\plugins\annotation.js.map" />
+    <None Include="wwwroot\js\chart\plugins\bullets.js" />
+    <None Include="wwwroot\js\chart\plugins\bullets.js.map" />
+    <None Include="wwwroot\js\chart\plugins\forceDirected.js" />
+    <None Include="wwwroot\js\chart\plugins\forceDirected.js.map" />
+    <None Include="wwwroot\js\chart\plugins\overlapBuster.js" />
+    <None Include="wwwroot\js\chart\plugins\overlapBuster.js.map" />
+    <None Include="wwwroot\js\chart\plugins\rangeSelector.js" />
+    <None Include="wwwroot\js\chart\plugins\rangeSelector.js.map" />
+    <None Include="wwwroot\js\chart\plugins\regression.js" />
+    <None Include="wwwroot\js\chart\plugins\regression.js.map" />
+    <None Include="wwwroot\js\chart\plugins\sliceGrouper.js" />
+    <None Include="wwwroot\js\chart\plugins\sliceGrouper.js.map" />
+    <None Include="wwwroot\js\chart\plugins\sunburst.js" />
+    <None Include="wwwroot\js\chart\plugins\sunburst.js.map" />
+    <None Include="wwwroot\js\chart\plugins\timeline.js" />
+    <None Include="wwwroot\js\chart\plugins\timeline.js.map" />
+    <None Include="wwwroot\js\chart\plugins\venn.js" />
+    <None Include="wwwroot\js\chart\plugins\venn.js.map" />
+    <None Include="wwwroot\js\chart\plugins\wordCloud.js" />
+    <None Include="wwwroot\js\chart\plugins\wordCloud.js.map" />
+    <None Include="wwwroot\webfonts\fa-brands-400.svg" />
+    <None Include="wwwroot\webfonts\fa-brands-400.woff2" />
+    <None Include="wwwroot\webfonts\fa-regular-400.svg" />
+    <None Include="wwwroot\webfonts\fa-regular-400.woff2" />
+    <None Include="wwwroot\webfonts\fa-solid-900.svg" />
+    <None Include="wwwroot\webfonts\fa-solid-900.woff2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="jQuery.UI.Combined" Version="1.12.1" />
+    <PackageReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.AspNetCore.Razor.Design" Version="2.2.0" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="2.2.3" />
+    <PackageReference Include="NLog.Web.AspNetCore" Version="4.8.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="nlog.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+</Project>

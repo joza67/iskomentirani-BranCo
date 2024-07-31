@@ -1,0 +1,683 @@
+﻿@model MoveeEventFrameViewModel
+
+@using LoRinoBackend.Functions;
+@using Microsoft.EntityFrameworkCore;
+@using Microsoft.AspNetCore.Identity
+
+@inject IMoveeEventRepository eventsList
+@inject IDeviceRepository device
+@inject ILocationRepository locations
+@inject UserManager<ApplicationUser> userManager
+@{
+    ViewData["Title"] = "EventsIndex";
+}
+@{ ViewBag.Title = "BranCo"; }
+
+
+
+@functions{
+
+    public string findUser(string id)
+    {
+        var userName = "";
+        ApplicationUser user = userManager.Users.Include(x => x.Company).FirstOrDefault(e => e.Id == id);
+        if (user != null)
+        {
+            userName = user.FirstName + " " + user.LastName;
+        }
+        return userName;
+    }    
+}
+
+@{
+
+    var allMsgs = Model;
+    var currentUserId = Context.User.Identity.Name;
+    double longitude = locations.GetLocationById(@Model.moveeEventFrame.LocationId).Long;
+    double latitude = locations.GetLocationById(@Model.moveeEventFrame.LocationId).Lat;
+    double zoom = locations.GetLocationById(@Model.moveeEventFrame.LocationId).MapZoom;
+    int count = ViewBag.Comments.Count;
+    var tagsDD = ViewBag.Tags;
+    var myTags = ViewBag.MyTags;
+
+    ApplicationUser currentUser = userManager.Users.Include(x => x.Company).SingleOrDefaultAsync(x => x.UserName == currentUserId).Result;
+
+
+    IEnumerable<Device> allDevices;
+
+    if(User.IsInRole("Super Admin"))
+    {
+        allDevices = device.GetAllData();
+    }
+    else
+    {
+        allDevices = device.GetMineDevice(currentUser.Company.Id);
+    }
+
+    List<string> devIds = new List<string>();
+
+    foreach (var dev in allDevices)
+    {
+        devIds.Add(dev.DevEui);
+    }
+
+    List<MoveeEventFrame> moveeEvents = new List<MoveeEventFrame>();
+
+    moveeEvents = eventsList.GetAllData().ToList();
+
+    IEnumerable<Location> eventLocations = new List<Location>();
+    eventLocations = locations.GetAllLocations();
+
+    List<MoveeTag> moveeTags = ViewBag.TagsList;
+}
+
+
+    <br />
+
+        <div class="row justify-content-center m-0">
+            <div class="col-sm-6 p-1">
+
+            <div class="card shadow">
+            
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <div class="float-left"><h6 class="m-0 font-weight-bold text-primary">Karta</h6></div>
+                    <div id="signalStatus" class="btn-circle float-right bg-danger"></div>
+
+                </div>
+                <div class="card-body">
+                    <div class="" style="z-index: 800" id="map"></div>
+
+                </div>
+        </div>
+
+    </div>
+        <div class="col-sm-6 p-1">
+        <div class="card shadow">
+            
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <div class="float-left"><h6 class="m-0 font-weight-bold text-primary">Detalji događaja</h6></div>
+
+                </div>
+                <div class="card-body">
+        <dl class="row" style="padding:20px 0px 0px 20px">
+            @if (User.IsInRole("Super Admin")){
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.moveeEventFrame.Id)
+        </dt>
+        <dd class = "col-sm-3">
+            @Html.DisplayFor(model => model.moveeEventFrame.Id)
+        </dd>
+            }
+        <dt class = "col-sm-3">
+            @Html.DisplayNameFor(model => model.moveeEventFrame.EventCreationTime)
+        </dt>
+        <dd class = "col-sm-4">
+            @Unix.ToDateTime(@Model.moveeEventFrame.EventCreationTime)
+        </dd>
+                    @if (Model.moveeEventFrame.IsAcked == true)
+                    {
+                        <dt class = "col-sm-2">
+                            @Html.DisplayNameFor(model => model.moveeEventFrame.EventAckBy)
+                        </dt>
+                        <dd class = "col-sm-3">
+                            @findUser(@Model.moveeEventFrame.EventAckBy)
+                        </dd>
+                        <dt class = "col-sm-3">
+                            @Html.DisplayNameFor(model => model.moveeEventFrame.EventAckTime)
+                        </dt>
+                        @if (@Model.moveeEventFrame.IsAcked == true)
+                        {
+                            <dd class = "col-sm-4">
+                                @Unix.ToDateTime(@Model.moveeEventFrame.EventAckTime)
+                            </dd>
+                        }
+                        else
+                        {
+                            <dd class = "col-sm-4"></dd>
+                        }
+                    }
+
+                    @if (Model.moveeEventFrame.IsCleared == true)
+                    {
+                        <dt class = "col-sm-2">
+                            @Html.DisplayNameFor(model => model.moveeEventFrame.EventClearBy)
+                        </dt>
+                        <dd class = "col-sm-3">
+                            @findUser(@Model.moveeEventFrame.EventClearBy)
+                        </dd>
+                        <dt class = "col-sm-3">
+                            @Html.DisplayNameFor(model => model.moveeEventFrame.EventClearTime)
+                        </dt>
+                        @if (@Model.moveeEventFrame.IsCleared == true)
+                        {
+                            <dd class = "col-sm-4">
+                                @Unix.ToDateTime(@Model.moveeEventFrame.EventClearTime)
+                            </dd>
+                        }
+                        else
+                        {
+                            <dd class = "col-sm-4"></dd>
+                        }
+                    }
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.moveeEventFrame.AlarmCount)
+        </dt>
+        <dd class = "col-sm-3">
+            @Html.DisplayFor(model => model.moveeEventFrame.AlarmCount)
+        </dd>
+        <dt class = "col-sm-3">
+            @Html.DisplayNameFor(model => model.moveeEventFrame.LocationId)
+        </dt>
+        <dd class = "col-sm-4">
+            @locations.GetLocation(@Model.moveeEventFrame.LocationId).Name
+        </dd>
+        </dl>
+        </div>
+        </div>
+        <div class="card shadow">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                   <div class="float-left"><h6 class="m-0 font-weight-bold text-primary">Tagovi</h6></div>
+                </div> 
+                <div class="card-body">
+                    <div class="row">
+                    
+                
+                @if (tagsDD.Count > 0)
+                            {
+                                <div class="col-2 p-2">
+                                <form asp-action="AddTagForDetails" method="post">
+                     <input type="hidden" name="eventId" value="@ViewBag.EventId" />
+                        <div class="form-group">
+                            <select name="tagId" class="form-control" asp-items="@tagsDD" style="max-width:150px;"></select>
+                        </div>
+                        <div class="form-group card-body p-2">
+                        <input type="submit" value="Dodaj" class="btn btn-default" />
+                        </div>
+                </form>
+                </div>
+                            }
+
+                    <div class="col-10">
+                    @foreach (var item in ViewBag.MyTags)
+                    {
+                      <button class="btn btn-dark m-1 text-white"><i class="fa-solid fa-tag"></i> @moveeTags.FirstOrDefault(a => a.Id == item.MoveeTagId).Name</button>
+                    }
+                    </div>
+                    
+                </div>
+                </div>
+            </div>
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <div class="float-left">
+                    <div class="float-left">
+                        <h6 class="m-0 font-weight-bold text-primary">Log</h6>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="container" style="padding-left: 0px">
+                    <div class="panel-body">
+                        <ul class="chat">
+                            @if (Model.LogViewModel != null)
+                            {
+                                @foreach (var item in Model.LogViewModel)
+                                {
+                                    <li class="left row">
+                                        <div class="chat-body">
+                                            <div class="header  justify-content-between">
+                                                <strong class="primary-font">@findUser(item.LogBy)</strong>
+                                                @if (@item.MessageType == MessageType.Potvrda)
+                                                {
+                                                    <span class="badge align-middle badge-pill badge-danger m-1">@item.MessageType</span>
+                                                }
+                                                else if (@item.MessageType == MessageType.Zatvaranje)
+                                                {
+                                                    <span class="badge align-middle badge-pill badge-warning m-1">@item.MessageType</span>
+                                                }
+                                                else if (@item.MessageType == MessageType.Tag)
+                                                {
+                                                    <span class="badge align-middle badge-pill badge-secondary m-1">@item.Action @item.MessageType</span>
+                                                }
+                                                else if (@item.MessageType == MessageType.Komentar)
+                                                {
+                                                    <span class="badge align-middle badge-pill badge-info m-1">@item.MessageType</span>
+                                                }
+                                                <small class="pull-right text-muted">@@@Unix.ToDateTime(item.LogTime)</small>
+                                            </div>
+
+                                            <p>
+                                                @item.Message
+                                            </p>
+                                        </div>
+                                    </li>
+                                }
+                            }
+                        </ul>
+                    </div>
+                    <div class="panel-footer">
+                        <form asp-action="CreateAckComment" method="post">
+                            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                            @if (Model.MoveeEventComment != null)
+                            {
+                                <input type="hidden" asp-for="MoveeEventComment.Active" value="@Model.MoveeEventComment.Active" />
+                                <input type="hidden" asp-for="MoveeEventComment.EventCommentBy" value="@Model.MoveeEventComment.EventCommentBy" />
+                                <input type="hidden" asp-for="MoveeEventComment.EventCommentTime" value="@Model.MoveeEventComment.EventCommentTime" />
+                            }
+
+                            <input type="hidden" asp-for="MoveeEventComment.MoveeEventFrameId" value="@Model.moveeEventFrame.Id" />
+                            <div class="row">
+                                <div class="col-10">
+                                    <input asp-for="MoveeEventComment.Comment" id="btn-input" type="text" class="form-control input-sm" placeholder="Komentirajte ovdje..." />
+                                    <span asp-validation-for="MoveeEventComment.Comment" class="text-danger"></span>
+                                </div>
+                                <div class="col-2">
+
+                                    <input type="submit" value="Pošalji" class="btn btn-default" id="btn-chat" />
+                                </div>
+                            </div>
+                            <br>
+                        </form>
+                    </div>
+                </div>
+
+                <div>
+                </div>
+            </div>
+        </div>
+        </div>
+        
+    </div>
+    
+
+
+
+
+            @section Scripts {
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.3.4/dist/leaflet.js"></script>
+    <script src="~/js/leaflet-color-markers.js"></script>
+    <link rel="stylesheet" href="~/css/MarkerCluster.css" />
+    <link rel="stylesheet" href="~/css/MarkerCluster.Default.css" />
+    <script src="~/js/leaflet.markercluster-src.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/mc-datepicker/dist/mc-calendar.min.js"></script>
+
+    <style>
+        #map {
+            height: calc(100vh - 250px);
+            min-height: 50vh;
+        }
+
+        .custom-popup .leaflet-popup-content-wrapper {
+            background: #2c3e50;
+            color: #fff;
+            font-size: 16px;
+            line-height: 24px;
+        }
+
+            .custom-popup .leaflet-popup-content-wrapper a {
+                color: rgba(255,255,255,0.5);
+            }
+
+        .custom-popup .leaflet-popup-tip-container {
+            width: 30px;
+            height: 15px;
+        }
+
+        .custom-popup .leaflet-popup-tip {
+            background: #2c3e50;
+            margin-left: 12px;
+        }
+
+
+        .info {
+            padding: 6px 8px;
+            font: 14px/16px Arial, Helvetica, sans-serif;
+            background: white;
+            background: rgba(255,255,255,0.8);
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            border-radius: 5px;
+            line-height: 24px;
+        }
+
+            .info h4 {
+                margin: 0 0 5px;
+                color: #777;
+            }
+
+        .legend {
+            text-align: left;
+            line-height: 18px;
+            color: #555;
+        }
+
+            .legend i {
+                width: 18px;
+                height: 18px;
+                float: left;
+                margin-right: 8px;
+              
+               opacity: 0.7;
+            }
+    </style>
+    <script>
+        $(document).ready(function () {
+
+        });
+    </script>
+    <script>
+
+        $("#deleteButton").click(function () {
+            $(".deleteSpanConfirm").animate({
+                opacity: '1'
+            });
+            $(".deleteSpanConfirm").css({ "transform": "translateX(0)" });
+        });
+
+        $("#deleteCancel").click(function () {
+            $(".deleteSpanConfirm").css({ "transform": "translateX(100%)" });
+            $(".deleteSpanConfirm").animate({ "opacity": "0" }, "slow");
+
+        });
+
+
+           var map = L.map('map').setView([@latitude, @longitude], @zoom);
+           var osmLayer = L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+                attribution: 'Powered by <a href="http://www.microlink.hr" > Micro-Link</a>',
+                maxZoom: 19,
+                id: 'mapbox/streets-v11',
+                tileSize: 512,
+                zoomOffset: -1,
+                accessToken: 'pk.eyJ1IjoianVrYTk3IiwiYSI6ImNrdTZxcng5eTN2c2IycHF0cnE1Zno5cHcifQ.gfrbRhNsX6XJOZywD-kSSw'
+            });
+
+        var json = @Html.Raw(Json.Serialize(allMsgs.moveeDataFrames));
+        var eId = @Html.Raw(Json.Serialize(allMsgs.moveeEventFrame.Id));
+        console.log(json);
+        var allDevices = [];
+        allDevices = @Html.Raw(Json.Serialize(devIds));
+
+            osmLayer.addTo(map);
+
+            var markersGroup = L.layerGroup(); //({ animateAddingMarkers: true }); //markerClusterGroup
+
+            var currentTime = new Date();
+
+            var customOptions =
+            {
+                'maxWidth': '400',
+                'width': '200',
+                'className': 'popupCustom'
+            }
+
+            var iconList = [];
+
+            var markers = [];
+
+            json.forEach((el) => {
+                console.log(el);
+                var lat = el.device.lat;
+                var lon = el.device.long;
+                var markerLocation = new L.LatLng(lat, lon);
+                var msgRec = new Date(el.recvTime);
+                var _css = "";
+                var _msg = "";
+
+                var diffTime = currentTime - msgRec;
+                if (diffTime > 172800000) {
+                    _css = "critical";
+                    _msg = "Kritično";
+                }
+                else if (diffTime > 86400000) {
+                    _css = "warning";
+                    _msg = "Upozorenje";
+                }
+                else {
+                    _css = "information";
+                    _msg = "Normalno";
+                }
+
+                var singleMarker = {};
+                singleMarker['id'] = el.id;
+                singleMarker['lat'] = lat;
+                singleMarker['lon'] = lon;
+                singleMarker['recvTime'] = el.recvTime;
+                singleMarker['name'] = el.device.name;
+                singleMarker['battery'] = el.battery;
+                singleMarker['devEui'] = el.device.devEui;
+                singleMarker['ackMsg'] = el.ackMsg;
+                singleMarker['cntAlarm'] = el.cntAlarm;
+
+                iconList.push(singleMarker);
+
+
+                var recievedDateTime = ((msgRec.getDate() + 1) < 10 ? "0" : "") + (msgRec.getDate()) + ".";
+                recievedDateTime += (msgRec.getMonth() < 10 ? "0" : "") + (msgRec.getMonth() + 1)  + ".";
+                recievedDateTime += msgRec.getFullYear();
+                recievedDateTime += " " + (msgRec.getHours() < 10 ? "0" : "") + msgRec.getHours() + ":";
+                recievedDateTime += (msgRec.getMinutes() < 10 ? "0" : "") + msgRec.getMinutes() + ":";
+                recievedDateTime += (msgRec.getSeconds() < 10 ? "0" : "") + msgRec.getSeconds();
+
+
+                //var icon = (el.cntAlarm > 0 ? redIcon : (currentTime - msgRec < 172800000 ? (currentTime - msgRec < 86400000 ? greenIcon : yellowIcon) : greyIcon));   // 86400000 is one day in miliseconds
+                var icon = (el.ackMsg == 0 ? redIcon : greenIcon);   // 86400000 is one day in miliseconds
+                var m = L.marker([el.device.lat, el.device.long], { title: el.device.devEui, icon: icon });//.addTo(map);
+                var customPopup = "<div style=\"line-height: 2rem\">"+
+                    "<h3 style=\"margin:0\">" + (el.device.name != null ? el.device.name : "No name") + "</h3>" +
+                    "<br><b>ID uređaja: </b><span class=\"\">" + (el.device.devEui) + "</span>" +
+                    //"<br>Status uređaja: <span class=\"" + _css + "\" style=\"color: white; text-transform: uppercase; padding: 4px 8px; margin-bottom: 10px; font-weight: bold; border-radius: 4px;\">" + _msg + "</span>" +
+                    "<br><b>Alarm: </b><span class=" + (el.ackMsg == false ? "\"Critical\"" : "\"information\"") + " style=\"color: white; text-transform: uppercase; padding: 4px 8px; font-weight: bold; border-radius: 4px; \">" + (el.ackMsg == 0 ? "Aktivan" : "Nema alarma") + "</span>" +
+                    //"<br><b>Broj alarma: </b><span class=\"\">" + (el.cntAlarm) + "</span>" +
+                    "<br><b>Baterija: </b>" + el.battery.toFixed(2) + " V" +
+                    //"<br>Temperatura: " + el.moveeDataFrame.temperature + " °C" +
+                    // "<br>Zadnji alarm: " + recievedDateTime +
+                    "<br><a class=\"btn btn-link\" style=\"max-width: 30vw\" href=\"./MV/details/" + el.device.devEui + "\">Detalji</a>" +
+                    (el.cntAlarm > 0 ? " <button class=\"btn btn-default\" style=\"max-width: 30vw\" onclick=\"setAck(\'" + el.device.devEui + "\', true)\">Potvrdite</button>" : "") + "</div>";
+
+                m.bindPopup(customPopup, customOptions);
+                markers.push(m);
+                markersGroup.addLayer(m);
+
+            });
+            markersGroup.addTo(map);
+
+            function markerFunction(id) {
+                for (var i in markers) {
+                    var markerID = markers[i].options.title;
+                    if (markerID == id) {
+                        markers[i].openPopup();
+                    };
+                }
+            }
+
+            var legend = L.control({ position: 'topright' });
+
+            legend.onAdd = function (map) {
+
+                var div = L.DomUtil.create('div', 'info legend'),
+                    grades = ['Bez alarma', 'Alarm'],
+                    labels = [];
+
+
+                for (var i = 0; i < grades.length; i++) {
+                    labels.push(
+                        '<i style="background:' + getColor(grades[i]) + '"></i>' +
+                        grades[i]);
+                }
+
+                div.innerHTML = labels.join('<br>');
+                return div;
+            };
+
+            legend.addTo(map);
+
+
+            function getColor(d) {
+                return d == 'Bez alarma' ? '#46b600' :
+                    d == 'Izvan mreže' ? 'gray' :
+                        d == 'Alarm' ? '#ea2f00' :
+
+                        d == 'Excellent' ? 'green' :
+                            d == 'Good' ? 'yellow' :
+                                d == 'Fair' ? 'orange' :
+                                    d == 'Poor' ? 'red' :
+                                        d == 'Unknow' ? 'gray' :
+                                            d == '< 5%' ? 'red' :
+                                                d == '< 10%' ? 'yellow' :
+                                                    d == '< 20%' ? 'orange' :
+                                                        d == '20 - 100%' ? 'green' :
+                                                            d == 'External Power' ? 'blue' :
+                                                                d == 'Unable to measure' ? 'black' :
+                                                                    '#FFEDA0';
+            }
+
+
+
+
+            var setAck = function (_devEui, _status) {
+                const full = location.protocol + '//' + location.host;
+                $.post(full + '/mv/setAck/',
+                    {
+                        Id: _devEui
+                    },
+                    function (result, status, xhr) {
+                        console.log(result);
+                    }
+                ).fail(function (xhr, status, error) {
+                    console.log("Result: " + status + " " + error + " " + xhr.status + " " + xhr.statusText)
+                });
+
+                markersGroup.clearLayers();
+
+                var currentTime = new Date();
+
+                updateListByDevEui(_devEui);
+
+                updateMap(false);
+        }
+
+        var updateListByDevEui = function (devEui) {
+            iconList.forEach((el) => {
+                if (devEui == el.devEui) {
+                    el.ackMsg = true;
+                    el.cntAlarm = 0;
+                }
+            });
+        }
+
+            var updateListById = function (id) {
+                iconList.forEach((el) => {
+                    if (id == el.id) {
+                        el.ackMsg = true;
+                    }
+                });
+            }
+
+            var updateList = function (devEui, unixTime, battery, temperature) {
+                iconList.forEach((el) => {
+                    if (el.devEui == devEui) {
+                        el.ackMsg = false;
+                        el.unixTime = unixTime;
+                        el.battery = battery;
+                        el.temperature = temperature;
+                        el.cntAlarm += 1;
+                    }
+                });
+            }
+
+            var updateMap = function (openLegend, devEui = '') {
+
+                markers = [];
+                iconList.forEach((el) => {
+                    var msgRec = new Date(el.unixTime);
+                    var currentTime = new Date();
+                    var _ack = el.ackMsg;
+                    var diffTime = currentTime - msgRec;
+
+                    var recievedDateTime = ((msgRec.getDate() + 1) < 10 ? "0" : "") + (msgRec.getDate()) + ".";
+                    recievedDateTime += (msgRec.getMonth() < 10 ? "0" : "") + (msgRec.getMonth() + 1) + ".";
+                    recievedDateTime += msgRec.getFullYear();
+                    recievedDateTime += " " + (msgRec.getHours() < 10 ? "0" : "") + msgRec.getHours() + ":";
+                    recievedDateTime += (msgRec.getMinutes() < 10 ? "0" : "") + msgRec.getMinutes() + ":";
+                    recievedDateTime += (msgRec.getSeconds() < 10 ? "0" : "") + msgRec.getSeconds();
+
+                    if (diffTime > 172800000) {
+                        _css = "critical";
+                        _msg = "Kritično";
+                    }
+                    else if (diffTime > 86400000) {
+                        _css = "warning";
+                        _msg = "Upozorenje";
+                    }
+                    else {
+                        _css = "normal";
+                        _msg = "Normalno";
+                    }
+
+                    //var icon = (_ack == false ? redIcon : (diffTime < 172800000 ? (diffTime < 86400000 ? greenIcon : yellowIcon) : greyIcon));   // 86400000 is one day in miliseconds
+                    var icon = (_ack == false ? redIcon : greenIcon);   // 86400000 is one day in miliseconds
+                    var m = L.marker([el.lat, el.lon], { title: el.devEui, icon: icon });//.addTo(map);
+                    var customPopup = "<div style=\"line-height: 2rem\">" +
+                        "<h3 style=\"margin:0\">" + (el.name != null ? el.name : "No name") + "</h3>" +
+                        "<br><b>ID uređaja: </b><span class=\"\">" + (el.devEui) + "</span>" +
+                        //"<br>Device status: <span class=\"" + _css + "\" style=\"color: white; text-transform: uppercase; padding: 4px 8px; margin-bottom: 10px; font-weight: bold; border-radius: 4px;\">" + _msg + "</span>" +
+                        "<br><b>Alarm: </b><span class=" + (el.cntAlarm > 0 ? "\"critical\"" : "\"normal\"") + " style=\"color: white; text-transform: uppercase; padding: 4px 8px; font-weight: bold; border-radius: 4px; \">" + (_ack == false ? "Aktivan" : "Nema Alarma") + "</span>" +
+                        //"<br><b>Broj alarma: </b><span class=\"\">" + (el.cntAlarm) + "</span>" +
+                        "<br><b>Baterija: </b>" + el.battery.toFixed(2) + " V" +
+                        "<br><a class=\"btn btn-link\"  style=\"max-width: 30vw\" href=\"./mv/details/" + el.devEui + "\">Detalji</a>" +
+                        (_ack == false ? " <button class=\"btn btn-default\"  style=\"max-width: 30vw\" onclick=\"setAck(\'" + el.devEui + "\', true)\">Potvrdite</button>" : "") + "</div>";
+
+                    m.bindPopup(customPopup, customOptions);
+                    markers.push(m);
+                    markersGroup.addLayer(m);
+
+                });
+                markersGroup.addTo(map);
+
+                markerFunction(devEui);
+            }
+
+           
+
+        var i = 0;
+        var onChange = function (devEui, message, unixTime, fPort) {
+            if (allDevices.includes(devEui)) {
+                var date = new Date(unixTime);
+
+                var msg = message.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                var encodedMsg = i + ". " + (date.getHours() < 10 ? '0' : '') + date.getHours() + ":" + (date.getMinutes() < 10 ? '0' : '') + date.getMinutes() + ":" + (date.getSeconds() < 10 ? '0' : '') + date.getSeconds() + " - " + (date.getDate() < 10 ? '0' : '') + date.getDate() + "." + (date.getMonth() < 10 ? '0' : '') + (date.getMonth() + 1) + "." + date.getFullYear() + "." + " Device: " + devEui + " Message: " + message + " Port: " + fPort;
+                var li = document.createElement("li");
+                var color = 'blue';
+                li.textContent = encodedMsg;
+                //document.getElementById("logWindow").appendChild(li);
+                //$("#logWindow").append('<li style="list-style-type: none; color:' + color + ';">' + htmlEncode(encodedMsg) + '</li > ');
+                //$("#logWindow").scrollTop($("#logWindow")[0].scrollHeight);
+
+                i++;
+
+                var battery = ((3.6 - 2.8) / 255 * parseInt(message.substr(0, 2), 16) + 2.8);
+                var temperature = parseInt(message.substr(2, 2), 16);
+
+                dataType = parseInt(message.substr(4, 2), 16);
+                if (dataType == 4) {
+                    gx = parseInt(message.substr(6, 2), 16) * 256 + parseInt(message.substr(8, 2), 16);
+                    gx = (gx < 16000) ? gx : 65536 - gx;
+
+                    gy = parseInt(message.substr(10, 2), 16) * 256 + parseInt(message.substr(12, 2), 16);
+                    gy = (gy < 16000) ? gy : 65536 - gy;
+
+                    gz = parseInt(message.substr(14, 2), 16) * 256 + parseInt(message.substr(16, 2), 16);
+                    gz = (gz < 16000) ? gz : 65536 - gz;
+                }
+                if (dataType == 4) {
+                    updateList(devEui, unixTime, battery, temperature);
+                    markersGroup.clearLayers();
+                    updateMap(true, devEui);
+                }
+            }
+        }
+    </script>
+    <script src="~/js/signalr/dist/browser/signalr.js"></script>
+    <script src="~/js/wanesy.js"></script>
+}

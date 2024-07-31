@@ -1,0 +1,29 @@
+﻿@model MoveeEventTag
+@{
+    ViewData["Title"] = "Create";
+}
+
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create" asp-route-eventId="@ViewBag.EventId" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="MoveeEventFrameId" value="@ViewBag.EventId" />
+            <div class="form-group">
+                <label asp-for="MoveeTagId" class="control-label"></label>
+                <select asp-for="MoveeTagId" class="form-control" asp-items="@ViewBag.Tags"></select>
+                <span asp-validation-for="MoveeTagId" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Stvori" class="btn btn-default" />
+            </div>
+        </form>
+    </div>
+</div>
+<div>
+    <a asp-action="Index" asp-route-eventId="@ViewBag.EventId">Natrag na popis</a>
+</div>
+
+@section Scripts {
+    <script src="~/js/CustomScript.js"></script>
+}

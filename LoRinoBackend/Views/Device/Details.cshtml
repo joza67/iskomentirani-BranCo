@@ -1,0 +1,66 @@
+﻿@model DeviceDetailsViewModel
+@inject UserManager<ApplicationUser> UserManager
+
+@{
+    ViewBag.Title = "Detalji uređaja";
+    var photoPath = "~/Images/Devices/" + (Model.Device.DeviceType.PhotoPath ?? "no-photo.png");
+}
+
+<div class="row justify-content-center m-3">
+    <div class="col-sm-3">
+        <div class="card">
+            <div class="card-header">
+                <h1>@Model.Device.Name</h1>
+            </div>
+
+            <div class="card-body text-left">
+                <h4>DevEui : @Model.Device.DevEui</h4>
+                <h4>Tip : @Model.Device.DeviceType.Name</h4>
+                <h4>Tvrtka : @Model.Device.Company.Name</h4>
+                <h4>Geo. dužina : @Model.Device.Long</h4>
+                <h4>Geo. širina : @Model.Device.Lat</h4>
+                <h4>Lokacija : @Model.Device.Location.Name</h4>
+
+
+            </div>
+            <div class="card-footer text-center">
+                <form method="post" asp-action="Delete" asp-route-id="@Model.Device.Id">
+                    <a asp-controller="Device" asp-action="Index" class="btn btn-default">Nazad</a>
+                    <a asp-controller="Device" asp-action="Edit" asp-route-id="@Model.Device.Id" class="btn btn-default m-1">Uredi</a>
+                    <span id="deleteSpan_@Model.Device.Id">
+                        <button type="submit" class="btn btn-default" style="width: auto">Izbriši uređaj</button>
+                    </span>
+                </form>
+            </div>
+        </div>
+    </div>
+    @*<div class="col-sm-9">
+        <div class="row">
+            <div class="col-12 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h1>Data:</h1>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-pie pt-4 pb-2">
+                            <canvas id="myPieChart"></canvas>
+                        </div>
+                        <div class="mt-4 text-center small">
+                            Detalji
+                        </div>
+                    </div>
+                    <div class="card-footer text-center text-danger" id="signalRconnectionStatus">
+                        Not connected yet
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>*@
+</div>
+
+@section Scripts {
+    <script src="~/js/CustomScript.js"></script>
+    <script src="~/js/signalr/dist/browser/signalr.js"></script>
+    <script src="~/js/wanesy.js"></script>
+}

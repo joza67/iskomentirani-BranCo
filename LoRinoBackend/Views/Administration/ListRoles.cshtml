@@ -1,0 +1,74 @@
+﻿@using Microsoft.AspNetCore.Authorization
+@inject IAuthorizationService authorizationService;
+
+@model IEnumerable<IdentityRole>
+
+@{
+    ViewBag.Title = "Uloge";
+}
+
+@if (Model.Any())
+{
+    @*<a class="btn btn-default mb-3" style="width:auto" asp-action="CreateRole"
+       asp-controller="administration">Dodaj novu ulogu</a>*@
+
+    foreach (var role in Model)
+    {
+        <div class="card mb-3">
+            <div class="card-header">
+                ID uloge : @role.Id
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">@role.Name</h5>
+            </div>
+            <div class="card-footer">
+                <form asp-action="DeleteRole" asp-route-id="@role.Id" method="post">
+                    @if ((await authorizationService.AuthorizeAsync(User, "EditRolePolicy")).Succeeded)
+                    {
+                        <a asp-controller="Administration" asp-action="EditRole"
+                           asp-route-id="@role.Id" class="btn btn-default">
+                            Uredi
+                        </a>
+                    }
+
+                    @if ((await authorizationService.AuthorizeAsync(User, "DeleteRolePolicy")).Succeeded)
+                    {
+                        <span id="confirmDeleteSpan_@role.Id" style="display:none">
+                            <span>Jeste li sigurni?</span>
+                            <button type="submit" class="btn btn-default">Potvrdi</button>
+                            <a href="#" class="btn btn-default"
+                               onclick="confirmDelete('@role.Id', false)">Odustani</a>
+                        </span>
+
+                        <span id="deleteSpan_@role.Id">
+                            <a href="#" class="btn btn-default"
+                               onclick="confirmDelete('@role.Id', true)">Izbriši</a>
+                        </span>
+                    }
+                </form>
+            </div>
+        </div>
+    }
+}
+else
+{
+    <div class="card">
+        <div class="card-header">
+            Još nije stvorena nijedna uloga
+        </div>
+        <div class="card-body">
+            <h5 class="card-title">
+                Kreiraj novu ulogu pritiskom na gumb ispod
+            </h5>
+            <a class="btn btn-default" style="width:auto"
+               asp-controller="administration" asp-action="CreateRole">
+                Dodaj novu ulogu
+            </a>
+        </div>
+    </div>
+}
+
+
+@section Scripts {
+    <script src="~/js/CustomScript.js"></script>
+}

@@ -1,0 +1,193 @@
+﻿@using LoRinoBackend.Functions;
+@model IEnumerable<HomeDataFrameViewModel>
+
+@{ 
+    ViewBag.Title = "Branco"; 
+}
+
+@functions
+{
+    double getBattPercentage(double volt)
+    {
+        //=$F$1-$F$1/((1+(C1/$A$1)^80)^0.165)
+        double output = 123 - (123 / (Math.Pow(1 + Math.Pow((volt / 3.1), 80), 0.165)));
+        return output;
+    } }
+
+
+@{
+    var online = 0;
+    var offline = 0;
+    var inactive = 0;
+    var lastAlarm = new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc);
+    var totalAlarms = 0;
+    var totalMessagesToday = 0;
+    var totalMessagesYesterday = 0;
+    var totalMessages = 0;
+    var totalMessageCompare = 0.0;
+    var messageSufix = "";
+
+    var batteryUnder20 = 0;
+    var batteryUnder10 = 0;
+    var batteryUnder5 = 0;
+
+    var batteryCapacity = 0.0;
+
+    List<string> offlineDevList = new List<string>();
+    List<string> inactiveDevList = new List<string>();
+
+
+    foreach (var data in Model)
+    {
+        totalAlarms += data.cntAlarm;
+        totalMessages += data.totalMsg;
+        totalMessagesToday += data.msgToday;
+        totalMessagesYesterday += data.msgYesterDay;
+        var recievedAt = Unix.ToDateTime(data.moveeDataFrame.RecvTime);
+
+        batteryCapacity = getBattPercentage(data.moveeDataFrame.Battery);
+
+        if (batteryCapacity < 5)
+        {
+            batteryUnder5++;
+        }
+        else if (batteryCapacity < 10)
+        {
+            batteryUnder10++;
+        }
+        else if (batteryCapacity < 20)
+        {
+            batteryUnder20++;
+        }
+
+        if (recievedAt > lastAlarm)
+        {
+            lastAlarm = recievedAt;
+        }
+
+        if (recievedAt >= DateTime.Now.AddDays(-1))
+        {
+            online++;
+        }
+        else if (recievedAt >= DateTime.Now.AddDays(-2))
+        {
+            offline++;
+            offlineDevList.Add(data.moveeDataFrame.Device.Name + " - " + Unix.ToDateTime(data.moveeDataFrame.RecvTime));
+        }
+        else
+        {
+            inactive++;
+            inactiveDevList.Add(data.moveeDataFrame.Device.Name + " - " + Unix.ToDateTime(data.moveeDataFrame.RecvTime));
+        }
+
+    }
+    totalMessageCompare = totalMessagesYesterday > 0 ? Math.Round((double)100 * totalMessagesToday / totalMessagesYesterday, 2) : -1;
+    messageSufix = totalMessageCompare < 100 ? "less" : "more"; }
+
+
+
+<div class="container-fluid">
+    <div class="row mb-5">
+
+    </div>
+    <!-- Content Row -->
+    <div class="row">
+        <!-- Devices Card Example -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100">
+                <div class="card-header bg-white mb-0  d-flex flex-row align-items-center justify-content-between">
+                    <div class="text-uppercase text-xs font-weight-bold text-primary text-uppercase mb-0">Ukupno uređaja<p class="h5 mb-0 font-weight-bold text-gray-800"></p></div>
+                    <div class="col-md-2 text-right">
+                        <i class="fab fa-dev fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="h5 col-4 mt-0 mb-0 font-weight-bold text-success text-center"><p class="mb-0">@online</p><p>Na mreži</p></div>
+                        <div class="h5 col-4 mt-0 mb-0 font-weight-bold text-warning text-center"><p class="mb-0">@offline</p><p>Izvan mreže</p></div>
+                        <div class="h5 col-4 mt-0 mb-0 font-weight-bold text-gray-800 text-center"><p class="mb-0">@inactive</p><p>Neaktivno</p></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Alarms Card Example -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-danger shadow h-100">
+                <div class="card-header bg-white mb-0  d-flex flex-row align-items-center justify-content-between">
+                    <div class="text-uppercase text-xs font-weight-bold text-primary text-uppercase mb-0">Alarm<p class="h5 mb-0 font-weight-bold text-gray-800">@totalAlarms</p></div>
+                    <div class="col-md-2 text-right">
+                        <i class="far fa-bell fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+                <div class="card-body mt-0">
+                    <div class="text-center align-items-center text-uppercase font-weight-bold text-gray-800">
+                        <div class="mb-0">@lastAlarm</div>
+                        <div class="mb-0">Zadnji alarm</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Messeges Card Example -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info h-100">
+                <div class="card-header bg-white mb-0  d-flex flex-row align-items-center justify-content-between">
+
+                    <div class="text-uppercase text-xs font-weight-bold text-info text-uppercase mb-0">Poruka danas / ukupno<p class="h5 mb-0 font-weight-bold text-gray-800">@totalMessagesToday / @totalMessages</p></div>
+                    <div class="col-md-2 text-right">
+                        <i class="far fa-comments fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+                <div class="card-body mt-0">
+                    <div class="text-center align-items-center text-uppercase font-weight-bold text-gray-800">
+                        <div class="mb-0">@(totalMessageCompare > 0 ? totalMessageCompare == 100 ? "Isti broj poruka" : (Math.Abs(totalMessageCompare - 100)).ToString() + "% " + messageSufix : "Nema poruka")</div>
+                        <div class="mb-0">@(totalMessageCompare > 0 ?"u odnosu na jučer":"od jučer")</div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        <!-- Battery Card Example -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning h-100">
+                <div class="card-header bg-white mb-0  d-flex flex-row align-items-center justify-content-between">
+
+                    <div class="text-uppercase text-xs font-weight-bold text-warning text-uppercase mb-0">Stanje baterije ispod 5%<p class="h5 mb-0 font-weight-bold text-gray-800">@batteryUnder5</p></div>
+                    <div class="col-md-2 text-right">
+                        <i class="fas fa-battery-three-quarters fa-rotate-270 fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+                <div class="card-body mt-0">
+                    <div class="row h-100 mb-0 mr-0 font-weight-bold text-gray-800  text-uppercase">
+                        <div class=" col-6 font-weight-bold text-gray-800 text-uppercase text-center mb-0"><p class="mb-0">@batteryUnder10</p>Ispod 10%</div>
+                        <div class=" col-6 font-weight-bold text-gray-800 text-uppercase text-center mb-0"><p class="mb-0">@batteryUnder20</p>Ispod 20%</div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Content Row -->
+    Offline: @offlineDevList.Count()
+    <br>
+    @{ foreach (var name in offlineDevList)
+        {
+@name;
+<br /> } }
+
+    Incative: @inactiveDevList.Count()
+    <br>
+    @{ foreach (var name in inactiveDevList)
+        {
+@name;
+<br /> } }
+    <div class="row">
+        <div class="col-12">
+            <div id="logWindow"></div>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <script src="~/js/signalr/dist/browser/signalr.js"></script>
+    <script src="~/js/wanesy.js"></script>
+    <script src="~/js/CustomScript.js"></script>
+}

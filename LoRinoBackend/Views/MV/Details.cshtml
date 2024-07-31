@@ -1,0 +1,353 @@
+﻿@model IEnumerable<MoveeDataFrame>
+@using LoRinoBackend.Functions;
+@using Microsoft.AspNetCore.Http
+@inject UserManager<ApplicationUser> UserManager
+@using Microsoft.EntityFrameworkCore;
+
+@{ ViewBag.Title = "BranCo - Detalji uređaja";
+    var data = Model.LastOrDefault();
+    var activeAlarms = 0;
+
+    var pageNumber = ViewBag.Page;
+
+    @foreach (var device in Model)
+    {
+        if (device.AckMsg == false && device.DataType == 4)
+        {
+            activeAlarms++;
+        }
+    }
+
+    var alarmMsg = "Normal";
+    var severityColor = "normal";
+
+    if (data != null)
+    {
+        if (DateTime.Now - Unix.ToDateTime(data.RecvTime) > TimeSpan.FromHours(48))
+        {
+            alarmMsg = "Critical";
+            severityColor = "critical";
+        }
+        else if (DateTime.Now - Unix.ToDateTime(data.RecvTime) > TimeSpan.FromHours(24))
+        {
+            alarmMsg = "Warning";
+            severityColor = "warning";
+        }
+    }
+
+
+}
+
+
+
+@functions{
+
+    public string findUser(string id)
+    {
+        var userName = "";
+        ApplicationUser user = UserManager.Users.Include(x => x.Company).FirstOrDefault(e => e.Id == id);
+        if (user != null) {
+            userName = user.FirstName + " " + user.LastName;
+        }
+        return userName;
+    }
+}
+
+<div class="container-fluid">
+    <div class="row pt-5">
+        <div class="col-lg-3  pb-5">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h4>@data.Device.Name</h4>
+                </div>
+
+                <div class="card-body h-100">
+                    <p class="card-text"><b>ID uređaja: </b><span id="msg_sub_num"> @data.Device.DevEui</span></p>
+                    <!-- <p class="card-text"><b>Device status: </b><span id="msg_dev_status" class="@severityColor text-nowrap" style="color: white; text-transform: uppercase; padding: 4px 8px; font-weight: bold; border-radius: 4px;">@alarmMsg</span></p> -->
+                    <p class="card-text"><b>Status alarma: </b><span id="msg_alarm_status" class="@(activeAlarms > 0?"critical":"normal") text-nowrap    " style="color: white; text-transform: uppercase; padding: 4px 8px; font-weight: bold; border-radius: 4px;">@(activeAlarms > 0 ? "Aktivan":"Nema alarma")</span></p>
+                    @if (User.IsInRole("Super Admin"))
+                    {
+                        <p class="card-text"><b>Datum i vrijeme: </b><span id="msg_time" class="text-nowrap"> @data.RecvTime.ToDateTime()</span></p>
+                        <p class="card-text"><b>Ukupno poruka: </b><span id="msg_count"> @Model.Where(d => d.DataType == 4).Count()</span></p>
+                        <p class="card-text"><b>Napon baterije: </b><span id="msg_battery">@Math.Round(data.Battery, 2) V</span></p>
+                    }
+                    <p class="card-text"><b>Broj alarma: </b><span id="msg_alarm_count"> @activeAlarms</span></p>
+                </div>
+
+            </div>
+        </div>
+        <div class="col-lg-9 pb-5">
+            <div class="card h-100">
+                <div class="card-header">
+                    <div class="d-inline-block"><h4>Podaci</h4></div>
+                    <div class="d-inline-block float-right" id="tools"></div>
+                    <div id="signalStatus" class="btn-circle float-right bg-danger"></div>
+                </div>
+                <div class="card-body" style="height:calc(100vh - 450px); overflow-y:auto">
+                    <div sstyle="min-height:25em;">
+                        <table class="table" id="eventTable">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Datum i vrijeme</th>
+                                    @if (User.IsInRole("Super Admin"))
+                                    {
+                                        <th scope="col">Temperatura</th>
+                                        <th scope="col">Baterija</th>
+                                    }
+                                    <th scope="col">Gx</th>
+                                    <th scope="col">Gy</th>
+                                    <th scope="col">Gz</th>
+                                    <th scope="col">Tip</th>
+                                    <th scope="col" class="text-center">Akcija</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var device in Model.OrderByDescending(d => d.Id))
+                                {
+                                    <tr>
+                                        @if (device.DataType == 4 || User.IsInRole("Super Admin"))
+                                        {
+                                            <td scope="col">@device.RecvTime.ToDateTime()</td>
+                                            @if (User.IsInRole("Super Admin"))
+                                            {
+                                                <td scope="col">@device.Temperature °C</td>
+                                                <td scope="col">@Math.Round(device.Battery, 2) V</td>
+
+                                            }
+                                            <td scope="col">@device.Gx</td>
+                                            <td scope="col">@device.Gy</td>
+                                            <td scope="col">@device.Gz</td>
+                                            <td scope="col">@Html.Raw(device.DataType == 4 ? "<span class='text-danger'>Alarm</span>" : "<span class='text-success'>Status</span>")</td>
+                                            @*
+                                                <td scope="col" class="text-center" id="row_@device.Id"> @Html.Raw(device.DataType == 4 ? (device.AckMsg == true ? "<button type='button' class='btn btn-success btn-acknowledge' data-text=\"Označite kao aktivno\" onclick=\"setAckSingle(" + device.Id + ", false)\">Aktivirajte</button>" : "<button class='btn btn-default btn-acknowledge' type='button' data-text=\"Označite kao viđeno\" onclick=\"setAckSingle(" + device.Id + ", true)\">Poništite</button>") : " ")</td
+                                            *@
+                                            <td scope="col" class="text-center" id="row_@device.Id"> @Html.Raw(device.DataType == 4 ? (device.AckMsg == true ? findUser(device.AckId) + "<br>" + @Unix.ToDateTime(device.AckTime) : "<button class='btn btn-default btn-acknowledge' type='button' data-text=\"Označite kao viđeno\" onclick=\"setAckSingle(" + device.Id + ", true)\">Potvrdite</button>") : " ")</td>
+
+                                        }
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+
+        .btn-acknowledge {
+            position: relative;
+        }
+
+            .btn-acknowledge:hover:before, .btn-acknowledge:hover:after {
+                opacity: 0.8;
+                display: block;
+                transition: 1s;
+                pointer-events: none;
+            }
+
+            .btn-acknowledge:before:hover, .btn-acknowledge:after:hover {
+                display: none;
+            }
+
+            .btn-acknowledge:before {
+                content: "";
+                position: absolute;
+                /* position tooltip correctly */
+                left: calc(50% - 10px);
+                bottom: 20px;
+                /* vertically center */
+
+                transform: translateY(-50%);
+                /* the arrow */
+                border: 10px solid #000;
+                border-color: black transparent transparent transparent;
+                opacity: 0;
+                z-index: 9999;
+                display: none;
+            }
+
+            .btn-acknowledge:after {
+                content: attr(data-text);
+                position: absolute;
+                /* vertically center */
+                top: -58px;
+                transform: translateY(0%);
+                /* move to right */
+                left: -10px;
+                /* basic styles */
+                width: 200px;
+                padding: 10px;
+                border-radius: 10px;
+                background: #000;
+                color: #fff;
+                text-align: center;
+                opacity: 0;
+                display: none;
+            }
+    </style>
+}
+
+@section Scripts {
+    <script>
+            var lastMessage = @data.RecvTime;
+            var thisDevice = "@data.Device.DevEui";
+
+            setInterval(function () {
+            var diffTime = Date.now() - lastMessage;
+            if (diffTime > 172800000) {
+                $('#msg_dev_status').removeClass();
+                $('#msg_dev_status').addClass("critical");
+                $('#msg_dev_status').html("Critical");
+            }
+            else if (diffTime > 86400000) {
+                $('#msg_dev_status').removeClass();
+                $('#msg_dev_status').addClass("warning");
+                $('#msg_dev_status').html("Warning");
+            }
+            else {
+                $('#msg_dev_status').removeClass();
+                $('#msg_dev_status').addClass("normal");
+                $('#msg_dev_status').html("Normal");
+            }
+            }, 1000);
+
+
+
+        var setAckSingle = function (id, _status) {
+            const full = location.protocol + '//' + location.host;
+            var alarms = parseInt($('#msg_alarm_count').text(), 10);
+            console.log("das")
+
+
+
+            $.post(full + '/mv/setAckSingle/',
+                {
+                    Id: id,
+                    AckMsg: _status,
+                    AckTime: new Date($.now())
+
+
+                },
+                function (result, status, xhr) {
+                    console.log(result);
+                    console.log(alarms);
+                    if (result.ackMsg == true) {
+                        @*
+                          $('#row_' + result.id).html("<button type='button' class='btn btn-success btn-acknowledge' data-text='Označite kao aktivno' onclick=\"setAckSingle(" + id + ", false)\">Aktivirajte</button>");
+                        *@
+                        $('#row_' + result.id).html("Potvrđeno");
+                        $('#msg_alarm_count').html(--alarms);
+                    } else if (result.ackMsg == false) {
+                        $('#row_' + result.id).html("<button class='btn btn-default btn-acknowledge' type='button' data-text='Označite kao viđeno' onclick=\"setAckSingle(" + id + ", true)\">Potvrdite</button>");
+                        $('#msg_alarm_count').html(++alarms);
+                    }
+
+                    if (alarms > 0) {
+                        $('#msg_alarm_status').removeClass();
+                        $('#msg_alarm_status').addClass("critical text-nowrap");
+                        $('#msg_alarm_status').html("Aktivan");
+                    } else {
+                        $('#msg_alarm_status').removeClass();
+                        $('#msg_alarm_status').addClass("normal text-nowrap");
+                        $('#msg_alarm_status').html("Nema alarma");
+                    }
+                }
+            ).fail(function (xhr, status, error) {
+                console.log("Result: " + status + " " + error + " " + xhr.status + " " + xhr.statusText)
+            });
+        }
+
+            $('#eventTable tbody tr td button').click(function () {
+                console.log("click");
+                $(this).parent().html("Potvrđeno");
+            });
+
+
+
+
+            var i = 0;
+    var onChange = function (devEui, message, unixTime, fPort, retId) {
+        if (devEui == thisDevice) {
+            var alarms = parseInt($('#msg_alarm_count').text(), 10);
+            var totalMsg = parseInt($('#msg_count').text(), 10);
+
+            //
+            var gx = 0;
+            var gy = 0;
+            var gz = 0;
+
+            var date = new Date(unixTime);
+
+            var dateToPrint = (date.getDate() < 10 ? '0' : '') + date.getDate() + "/" + (date.getMonth() < 10 ? '0' : '') + (date.getMonth() + 1) + "/" + date.getFullYear() + " " + (date.getHours() < 10 ? '0' : '') + date.getHours() + ":" + (date.getMinutes() < 10 ? '0' : '') + date.getMinutes() + ":" + (date.getSeconds() < 10 ? '0' : '') + date.getSeconds();
+
+            var msg = message.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            var encodedMsg = i + ". " + dateToPrint + "." + " Device: " + devEui + " Message: " + message + " Port: " + fPort;
+            var li = document.createElement("li");
+            var color = 'blue';
+            li.textContent = encodedMsg;
+            //document.getElementById("logWindow").appendChild(li);
+            //$("#logWindow").append('<li style="list-style-type: none; color:' + color + ';">' + htmlEncode(encodedMsg) + '</li > ');
+            //$("#logWindow").scrollTop($("#logWindow")[0].scrollHeight);
+            i++;
+            var battery = ((3.6 - 2.8) / 255 * parseInt(message.substr(0, 2), 16) + 2.8);
+            var temperature = parseInt(message.substr(2, 2), 16);
+
+            dataType = parseInt(message.substr(4, 2), 16);
+
+
+            $('#msg_dev_status').removeClass();
+            $('#msg_dev_status').addClass("normal text-nowrap");
+            $('#msg_dev_status').html("Normal");
+            $('#msg_time').html(dateToPrint);
+            $('#msg_battery').html(battery.toFixed(2));
+
+            if (dataType == 4) {
+                $('#msg_count').html(++totalMsg);
+                $('#msg_alarm_count').html(++alarms);
+                if (alarms > 0) {
+                    $('#msg_alarm_status').removeClass();
+                    $('#msg_alarm_status').addClass("critical text-nowrap");
+                    $('#msg_alarm_status').html("Aktivan");
+                } else {
+                    $('#msg_alarm_status').removeClass();
+                    $('#msg_alarm_status').addClass("normal text-nowrap");
+                    $('#msg_alarm_status').html("Nema Alarma");
+                }
+                gx = parseInt(message.substr(6, 2), 16) * 256 + parseInt(message.substr(8, 2), 16);
+                gx = (gx < 16000) ? gx : 65536 - gx;
+
+                gy = parseInt(message.substr(10, 2), 16) * 256 + parseInt(message.substr(12, 2), 16);
+                gy = (gy < 16000) ? gy : 65536 - gy;
+
+                gz = parseInt(message.substr(14, 2), 16) * 256 + parseInt(message.substr(16, 2), 16);
+                gz = (gz < 16000) ? gz : 65536 - gz;
+            }
+            if (dataType == 4) {
+                $('#eventTable tbody')
+                    .prepend('<tr />')
+                    .children('tr:first')
+                    .append('<td scope="col">' + dateToPrint + '</td>')
+                    @if (User.IsInRole("Super Admin"))
+                    {
+                        @Html.Raw("\t\t\t\t.append('<td scope=\"col\">' + temperature + ' °C</td>')\n\r");
+                        @Html.Raw("\t\t\t\t.append('<td scope=\"col\">' + battery.toFixed(2) + ' V</td>')\n\r");
+                    }
+                    .append('<td scope="col">' + gx + '</td>')
+                    .append('<td scope="col">' + gy + '</td>')
+                    .append('<td scope="col">' + gz + '</td>')
+                    .append('<td scope="col"><span class=' + (dataType == 4 ? "\"text-danger\">Alarm" : "\"text-success\">Status") + '</span></td>')
+                    .append('<td scope="col" class="text-center" id="row_' + retId + '">' + (dataType == 4 ? "<button type='button' class='btn btn-warning btn-acknowledge' data-text='Označite kao viđeno' onclick =\"setAckSingle(" + retId + ", true)\">Novi alarm</button>" : "") + '</td>');
+            }
+        }
+    }
+
+
+
+    </script>
+    <script src="~/js/signalr/dist/browser/signalr.js"></script>
+    <script src="~/js/wanesy.js"></script>
+}

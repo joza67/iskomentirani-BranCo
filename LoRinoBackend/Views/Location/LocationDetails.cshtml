@@ -1,0 +1,633 @@
+﻿@model LocationDetailsViewModel
+@using LoRinoBackend.Functions;
+@using Microsoft.EntityFrameworkCore;
+@using Microsoft.AspNetCore.Identity
+
+@inject IMoveeEventRepository eventsList
+@inject IDeviceRepository device
+@inject ILocationRepository locations
+@inject UserManager<ApplicationUser> userManager
+@{
+    ViewData["Title"] = "LocationDetails";
+    var rowState = "0";
+}
+@{ ViewBag.Title = "BranCo"; }
+@{
+    ViewBag.Title = "Podaci o lokaciji";
+}
+@functions{
+
+    public string findUser(string id)
+    {
+        var userName = "";
+        ApplicationUser user = userManager.Users.Include(x => x.Company).FirstOrDefault(e => e.Id == id);
+        if (user != null)
+        {
+            userName = user.FirstName + " " + user.LastName;
+        }
+        return userName;
+    }    
+}
+
+<style type="text/css">
+    .State0 {
+        background-color: green;
+    }
+
+    .State1 {
+        background-color: #b7113c;
+        color: white;
+    }
+
+    .State2 {
+        background-color: #FFA500;
+        color: white;
+    }
+</style>
+
+<style type="text/css">
+    .btn-circle.btn-xl {
+        width: 20px;
+        height: 20px;
+        padding: 13px 13px;
+        border-radius: 120px;
+        font-size: 15px;
+        text-align: center;
+    }
+
+    
+
+
+</style>
+
+@{
+
+    var allMsgs = Model;
+    var currentUserId = Context.User.Identity.Name;
+    double longitude = locations.GetLocationById(Model.Location.Id).Long;
+    double latitude = locations.GetLocationById(Model.Location.Id).Lat;
+    double zoom = locations.GetLocationById(Model.Location.Id).MapZoom;
+
+    ApplicationUser currentUser = userManager.Users.Include(x => x.Company).SingleOrDefaultAsync(x => x.UserName == currentUserId).Result;
+    var devices = allMsgs.Devices.Where(a => a.LocationId == Model.Location.Id);
+
+    List<MoveeDataFrame> devicesFromLocation = new List<MoveeDataFrame>();
+
+
+    IEnumerable<Device> alarmDevices;
+    IEnumerable<Device> locationDevices;
+
+    if (User.IsInRole("Super Admin"))
+    {
+        alarmDevices = devices;
+    }
+    else
+    {
+        alarmDevices = devices.Where(c => c.Company.Id == currentUser.Company.Id).ToList();
+    }
+
+    if (User.IsInRole("Super Admin"))
+    {
+        locationDevices = devices;
+    }
+    else
+    {
+        locationDevices = devices.Where(c => c.Company.Id == currentUser.Company.Id).ToList();
+    }
+
+    List<string> alarmIds = new List<string>();
+    List<string> devIds = new List<string>();
+
+    foreach (var item in devices)
+    {
+        devicesFromLocation.Add(new MoveeDataFrame { DeviceId = item.Id, Device = item, AckMsg = false });
+    }
+
+    var deveuiFromDataframe = (from d in devices
+                               join df in devicesFromLocation
+                               on d.Id equals df.DeviceId
+                               where df.AckMsg == false
+                               select d.DevEui).ToList();
+
+
+
+
+}
+
+<div class="row justify-content-center m-0">
+   <div class="col-sm-6 p-1">
+      <div class="card shadow">
+         <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <div class="float-left">
+               <h6 class="m-0 font-weight-bold text-primary">Karta</h6>
+            </div>
+            <div id="signalStatus" class="btn-circle float-right bg-danger"></div>
+         </div>
+         <div class="card-body">
+            <div class="" style="z-index: 800" id="map"></div>
+         </div>
+      </div>
+   </div>
+   <div class="col-sm-6 p-1">
+      <div class="card shadow">
+         <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <div class="float-left">
+               <h6 class="m-0 font-weight-bold text-primary">Detalji lokacije</h6>
+            </div>
+         </div>
+         <div class="card-body">
+            <dl class="row" style="padding:20px 0px 0px 20px">
+               @if (User.IsInRole("Super Admin")){
+               <dt class = "col-sm-2">
+                  @Html.DisplayNameFor(model => model.Location.Id)
+               </dt>
+               <dd class = "col-sm-3">
+                  @Html.DisplayFor(model => model.Location.Id)
+               </dd>
+               }
+               <dt class = "col-sm-3">
+                  @Html.DisplayNameFor(model => model.Location.Name)
+               </dt>
+               <dd class = "col-sm-4">
+                  @Html.DisplayFor(model => model.Location.Name)
+               </dd>
+               <dt class = "col-sm-2">
+                  @Html.DisplayNameFor(model => model.Location.Lat)
+               </dt>
+               <dd class = "col-sm-3">
+                  @Html.DisplayFor(model => model.Location.Lat)
+               </dd>
+               <dt class = "col-sm-3">
+                  @Html.DisplayNameFor(model => model.Location.Long)
+               </dt>
+               <dd class = "col-sm-4">
+                  @Html.DisplayFor(model => model.Location.Long)
+               </dd>
+               
+               <dt class = "col-sm-2">
+                  @Html.DisplayNameFor(model => model.Location.Road)
+               </dt>
+               <dd class = "col-sm-3">
+                  @Html.DisplayFor(model => model.Location.Road)
+               </dd>
+               <dt class="col-sm-3">
+                  @Html.DisplayNameFor(model => model.Location.RoadSection)
+               </dt>
+               <dd class="col-sm-4">
+                  @Html.DisplayFor(model => model.Location.RoadSection)
+               </dd>
+               @if (User.IsInRole("Super Admin") || User.IsInRole("Admin"))
+                    {
+               <dt class = "col-sm-2">
+                  @Html.DisplayNameFor(model => model.Location.TimerLenght)
+               </dt>
+               <dd class = "col-sm-3">
+                  @Html.DisplayFor(model => model.Location.TimerLenght) sec
+               </dd>
+                    }
+               
+            </dl>
+
+         </div>
+      </div>
+      <div class="card shadow">
+         <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <div class="float-left">
+               <div class="float-left">
+                        <h6 class="m-0 font-weight-bold text-primary">Povijest događaja</h6>
+               </div>
+            </div>
+         </div>
+         <div class="card-body">
+            <div class="container" style="padding-left: 0px">
+               <div class="panel-body">
+                  @if (Model.moveeEventFrames.Count() == 0)
+                  {
+                  <div class="row text-muted">-</div>
+                  }
+                  else
+                  {
+                  <table class="table">
+                     <thead>
+                        <tr>
+                                        <th class="col-1">
+                                            Status
+                                        </th>
+                           <th class="col-1">
+                              @Html.DisplayNameFor(model => model.moveeEventFrame.Id)
+                           </th>
+
+                           <th class="col-1">
+                              @Html.DisplayNameFor(model => model.moveeEventFrame.EventCreationTime)
+                           </th>
+                           <th class="col-1">
+                              @Html.DisplayNameFor(model => model.moveeEventFrame.EventAckBy)
+                           </th>
+                           <th class="col-1">
+                              @Html.DisplayNameFor(model => model.moveeEventFrame.EventAckTime)
+                           </th>
+                           <th class="col-1">
+                              @Html.DisplayNameFor(model => model.moveeEventFrame.EventClearBy)
+                           </th>
+                           <th class="col-1">
+                              @Html.DisplayNameFor(model => model.moveeEventFrame.EventClearTime)
+                           </th>
+                           <th class="col-1">
+                              @Html.DisplayNameFor(model => model.moveeEventFrame.AlarmCount)
+                           </th>
+                           <th class="col-1">
+                              @Html.DisplayNameFor(model => model.moveeEventFrame.LocationId)
+                           </th>
+                           <th class="col-1"></th>
+                        </tr>
+                     </thead>
+                     <tbody>
+                        @foreach (var item in Model.moveeEventFrames.OrderByDescending(i => i.Id).Where(i => i.LocationId != 0))
+                        {
+                        if (item.IsAcked == true && item.IsCleared == true)
+                        {
+                        rowState = "State0";
+                        }
+                        else if (item.IsAcked == false && item.IsCleared == false)
+                        {
+                        rowState = "State1";
+                        }
+                        else if (item.IsAcked == true && item.IsCleared == false)
+                        {
+                        rowState = "State2";
+                        }
+                        <tr>
+                        <td>
+                            <button type="button" class="btn btn-circle btn-xl @rowState.ToString()"></button>
+                            </td>
+                           <td>
+                              @Html.DisplayFor(modelItem => item.Id)
+                           </td>
+
+                           <td>
+                              @Unix.ToDateTime(item.EventCreationTime)
+                           </td>
+                           <td>
+                              @findUser(@item.EventAckBy)
+                           </td>
+                           @if (@item.IsAcked == true)
+                           {
+                           <td>
+                              @Unix.ToDateTime(@item.EventAckTime)
+                                                    <script>console.log("@item.EventAckTime")</script>
+                           </td>
+                           }
+                           else
+                           {
+                           <td></td>
+                           }
+                           <td>
+                              @findUser(@item.EventClearBy)
+                           </td>
+                           @if (@item.IsCleared == true)
+                           {
+                           <td>
+                              @Unix.ToDateTime(@item.EventClearTime)
+                           </td>
+                           }
+                           else
+                           {
+                           <td></td>
+                           }
+                           <td>
+                              @Html.DisplayFor(modelItem => item.AlarmCount)
+                           </td>
+                           <td>
+                              @locations.GetLocation(item.LocationId).Name
+                           </td>
+                           <td>
+                              <a class="btn btn-default" asp-controller="MV" asp-action="EventsDetails" asp-route-guid="@item.Guid">Detalji</a>
+                           </td>
+                        </tr>
+                        }
+                     </tbody>
+                  </table>
+                  }
+               </div>
+            </div>
+         </div>
+      </div>
+   </div>
+</div>
+    @section Scripts {
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.3.4/dist/leaflet.js"></script>
+    <script src="~/js/leaflet-color-markers.js"></script>
+    <link rel="stylesheet" href="~/css/MarkerCluster.css" />
+    <link rel="stylesheet" href="~/css/MarkerCluster.Default.css" />
+    <script src="~/js/leaflet.markercluster-src.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/mc-datepicker/dist/mc-calendar.min.js"></script>
+
+    <style>
+        #map {
+            height: calc(100vh - 250px);
+            min-height: 50vh;
+        }
+
+        .custom-popup .leaflet-popup-content-wrapper {
+            background: #2c3e50;
+            color: #fff;
+            font-size: 16px;
+            line-height: 24px;
+        }
+
+            .custom-popup .leaflet-popup-content-wrapper a {
+                color: rgba(255,255,255,0.5);
+            }
+
+        .custom-popup .leaflet-popup-tip-container {
+            width: 30px;
+            height: 15px;
+        }
+
+        .custom-popup .leaflet-popup-tip {
+            background: #2c3e50;
+            margin-left: 12px;
+        }
+
+
+        .info {
+            padding: 6px 8px;
+            font: 14px/16px Arial, Helvetica, sans-serif;
+            background: white;
+            background: rgba(255,255,255,0.8);
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            border-radius: 5px;
+            line-height: 24px;
+        }
+
+            .info h4 {
+                margin: 0 0 5px;
+                color: #777;
+            }
+
+        .legend {
+            text-align: left;
+            line-height: 18px;
+            color: #555;
+        }
+
+            .legend i {
+                width: 18px;
+                height: 18px;
+                float: left;
+                margin-right: 8px;
+              
+               opacity: 0.7;
+            }
+    </style>
+    <script>
+        $(document).ready(function () {
+
+        });
+        var test = @Model.moveeEventFrames;
+    </script>
+    <script>
+
+        var map = L.map('map').setView([@latitude, @longitude], @zoom);
+        var osmLayer = L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+            attribution: 'Powered by <a href="http://www.microlink.hr" > Micro-Link</a>',
+            maxZoom: 19,
+            id: 'mapbox/streets-v11',
+            tileSize: 512,
+            zoomOffset: -1,
+            accessToken: 'pk.eyJ1IjoianVrYTk3IiwiYSI6ImNrdTZxcng5eTN2c2IycHF0cnE1Zno5cHcifQ.gfrbRhNsX6XJOZywD-kSSw'
+        }).addTo(map);
+
+
+
+        var jsonAlarms = @Html.Raw(Json.Serialize(allMsgs.moveeDataFrames));
+        var jsonDevices = @Html.Raw(Json.Serialize(devicesFromLocation));
+
+        var alarmDevices = [];
+        alarmDevices = @Html.Raw(Json.Serialize(alarmIds));
+        locationDevices = @Html.Raw(Json.Serialize(deveuiFromDataframe));
+        console.log(alarmDevices);
+
+        osmLayer.addTo(map);
+
+        var markersGroup = L.layerGroup(); //({ animateAddingMarkers: true }); //markerClusterGroup
+
+        var currentTime = new Date();
+
+        var customOptions =
+        {
+            'maxWidth': '400',
+            'width': '200',
+            'className': 'popupCustom'
+        }
+
+        var iconList = [];
+
+        var markers = [];
+        console.log(jsonAlarms);
+        jsonDevices.forEach((el) => {
+            console.log(el);
+            var lat = el.device.lat;
+            var lon = el.device.long;
+            var markerLocation = new L.LatLng(lat, lon);
+            var msgRec = new Date(el.recvTime);
+            var _css = "";
+            var _msg = "";
+
+            var diffTime = currentTime - msgRec;
+            if (diffTime > 172800000) {
+                _css = "critical";
+                _msg = "Kritično";
+            }
+            else if (diffTime > 86400000) {
+                _css = "warning";
+                _msg = "Upozorenje";
+            }
+            else {
+                _css = "information";
+                _msg = "Normalno";
+            }
+
+            var singleMarker = {};
+            singleMarker['id'] = el.id;
+            singleMarker['lat'] = lat;
+            singleMarker['lon'] = lon;
+            singleMarker['recvTime'] = el.recvTime;
+            singleMarker['name'] = el.device.name;
+            singleMarker['battery'] = el.battery;
+            singleMarker['devEui'] = el.device.devEui;
+            singleMarker['ackMsg'] = el.ackMsg;
+            singleMarker['cntAlarm'] = el.cntAlarm;
+
+            iconList.push(singleMarker);
+
+
+            var recievedDateTime = ((msgRec.getDate() + 1) < 10 ? "0" : "") + (msgRec.getDate()) + ".";
+            recievedDateTime += (msgRec.getMonth() < 10 ? "0" : "") + (msgRec.getMonth() + 1) + ".";
+            recievedDateTime += msgRec.getFullYear();
+            recievedDateTime += " " + (msgRec.getHours() < 10 ? "0" : "") + msgRec.getHours() + ":";
+            recievedDateTime += (msgRec.getMinutes() < 10 ? "0" : "") + msgRec.getMinutes() + ":";
+            recievedDateTime += (msgRec.getSeconds() < 10 ? "0" : "") + msgRec.getSeconds();
+
+
+            //var icon = (el.cntAlarm > 0 ? redIcon : (currentTime - msgRec < 172800000 ? (currentTime - msgRec < 86400000 ? greenIcon : yellowIcon) : greyIcon));   // 86400000 is one day in miliseconds
+            var icon = (el.ackMsg == 0 ? greenIcon : redIcon);   // 86400000 is one day in miliseconds
+            var m = L.marker([el.device.lat, el.device.long], { title: el.device.devEui, icon: icon });//.addTo(map);
+            //var customPopup = "<div style=\"line-height: 2rem\">" +
+            //    "<h3 style=\"margin:0\">" + (el.device.name != null ? el.device.name : "No name") + "</h3>" +
+            //    "<br><b>ID uređaja: </b><span class=\"\">" + (el.device.devEui) + "</span>" +
+            //    //"<br>Status uređaja: <span class=\"" + _css + "\" style=\"color: white; text-transform: uppercase; padding: 4px 8px; margin-bottom: 10px; font-weight: bold; border-radius: 4px;\">" + _msg + "</span>" +
+            //    "<br><b>Alarm: </b><span class=" + (el.ackMsg == false ? "\"Critical\"" : "\"information\"") + " style=\"color: white; text-transform: uppercase; padding: 4px 8px; font-weight: bold; border-radius: 4px; \">" + (el.ackMsg == 0 ? "Aktivan" : "Nema alarma") + "</span>" +
+            //    //"<br><b>Broj alarma: </b><span class=\"\">" + (el.cntAlarm) + "</span>" +
+            //    "<br><b>Baterija: </b>" + el.battery.toFixed(2) + " V" +
+            //    //"<br>Temperatura: " + el.moveeDataFrame.temperature + " °C" +
+            //    // "<br>Zadnji alarm: " + recievedDateTime +
+            //    (el.cntAlarm > 0 ? " <button class=\"btn btn-default\" style=\"max-width: 30vw\" onclick=\"setAck(\'" + el.device.devEui + "\', true)\">Potvrdite</button>" : "") + "</div>";
+
+            //m.bindPopup(customPopup, customOptions);
+            markers.push(m);
+            markersGroup.addLayer(m);
+
+        });
+        markersGroup.addTo(map);
+
+        osmLayer.addTo(map);
+
+        var markersGroup = L.layerGroup(); //({ animateAddingMarkers: true }); //markerClusterGroup
+
+        var currentTime = new Date();
+
+        var customOptions =
+        {
+            'maxWidth': '400',
+            'width': '200',
+            'className': 'popupCustom'
+        }
+
+        var iconList = [];
+
+        var markers = [];
+        console.log(jsonAlarms);
+        jsonAlarms.forEach((el) => {
+            console.log(el);
+            var lat = el.device.lat;
+            var lon = el.device.long;
+            var markerLocation = new L.LatLng(lat, lon);
+            var msgRec = new Date(el.recvTime);
+            var _css = "";
+            var _msg = "";
+
+            var diffTime = currentTime - msgRec;
+            if (diffTime > 172800000) {
+                _css = "critical";
+                _msg = "Kritično";
+            }
+            else if (diffTime > 86400000) {
+                _css = "warning";
+                _msg = "Upozorenje";
+            }
+            else {
+                _css = "information";
+                _msg = "Normalno";
+            }
+
+            var singleMarker = {};
+            singleMarker['id'] = el.id;
+            singleMarker['lat'] = lat;
+            singleMarker['lon'] = lon;
+            singleMarker['recvTime'] = el.recvTime;
+            singleMarker['name'] = el.device.name;
+            singleMarker['battery'] = el.battery;
+            singleMarker['devEui'] = el.device.devEui;
+            singleMarker['ackMsg'] = el.ackMsg;
+            singleMarker['cntAlarm'] = el.cntAlarm;
+
+            iconList.push(singleMarker);
+
+
+            var recievedDateTime = ((msgRec.getDate() + 1) < 10 ? "0" : "") + (msgRec.getDate()) + ".";
+            recievedDateTime += (msgRec.getMonth() < 10 ? "0" : "") + (msgRec.getMonth() + 1) + ".";
+            recievedDateTime += msgRec.getFullYear();
+            recievedDateTime += " " + (msgRec.getHours() < 10 ? "0" : "") + msgRec.getHours() + ":";
+            recievedDateTime += (msgRec.getMinutes() < 10 ? "0" : "") + msgRec.getMinutes() + ":";
+            recievedDateTime += (msgRec.getSeconds() < 10 ? "0" : "") + msgRec.getSeconds();
+
+
+            //var icon = (el.cntAlarm > 0 ? redIcon : (currentTime - msgRec < 172800000 ? (currentTime - msgRec < 86400000 ? greenIcon : yellowIcon) : greyIcon));   // 86400000 is one day in miliseconds
+            var icon = (el.ackMsg == 0 ? redIcon : greenIcon);   // 86400000 is one day in miliseconds
+            var m = L.marker([el.device.lat, el.device.long], { title: el.device.devEui, icon: icon });//.addTo(map);
+            //var customPopup = "<div style=\"line-height: 2rem\">" +
+            //    "<h3 style=\"margin:0\">" + (el.device.name != null ? el.device.name : "No name") + "</h3>" +
+            //    "<br><b>ID uređaja: </b><span class=\"\">" + (el.device.devEui) + "</span>" +
+            //    //"<br>Status uređaja: <span class=\"" + _css + "\" style=\"color: white; text-transform: uppercase; padding: 4px 8px; margin-bottom: 10px; font-weight: bold; border-radius: 4px;\">" + _msg + "</span>" +
+            //    "<br><b>Alarm: </b><span class=" + (el.ackMsg == false ? "\"Critical\"" : "\"information\"") + " style=\"color: white; text-transform: uppercase; padding: 4px 8px; font-weight: bold; border-radius: 4px; \">" + (el.ackMsg == 0 ? "Aktivan" : "Nema alarma") + "</span>" +
+            //    //"<br><b>Broj alarma: </b><span class=\"\">" + (el.cntAlarm) + "</span>" +
+            //    "<br><b>Baterija: </b>" + el.battery.toFixed(2) + " V" +
+            //    //"<br>Temperatura: " + el.moveeDataFrame.temperature + " °C" +
+            //    // "<br>Zadnji alarm: " + recievedDateTime +
+            //    (el.cntAlarm > 0 ? " <button class=\"btn btn-default\" style=\"max-width: 30vw\" onclick=\"setAck(\'" + el.device.devEui + "\', true)\">Potvrdite</button>" : "") + "</div>";
+
+            //m.bindPopup(customPopup, customOptions);
+            markers.push(m);
+            markersGroup.addLayer(m);
+
+        });
+        markersGroup.addTo(map);
+
+        function markerFunction(id) {
+            for (var i in markers) {
+                var markerID = markers[i].options.title;
+                if (markerID == id) {
+                    markers[i].openPopup();
+                };
+            }
+        }
+
+        var legend = L.control({ position: 'topright' });
+
+        legend.onAdd = function (map) {
+
+            var div = L.DomUtil.create('div', 'info legend'),
+                grades = ['Bez alarma', 'Alarm'],
+                labels = [];
+
+
+            for (var i = 0; i < grades.length; i++) {
+                labels.push(
+                    '<i style="background:' + getColor(grades[i]) + '"></i>' +
+                    grades[i]);
+            }
+
+            div.innerHTML = labels.join('<br>');
+            return div;
+        };
+
+        legend.addTo(map);
+
+
+        function getColor(d) {
+            return d == 'Bez alarma' ? '#46b600' :
+                d == 'Izvan mreže' ? 'gray' :
+                    d == 'Alarm' ? '#ea2f00' :
+
+                        d == 'Excellent' ? 'green' :
+                            d == 'Good' ? 'yellow' :
+                                d == 'Fair' ? 'orange' :
+                                    d == 'Poor' ? 'red' :
+                                        d == 'Unknow' ? 'gray' :
+                                            d == '< 5%' ? 'red' :
+                                                d == '< 10%' ? 'yellow' :
+                                                    d == '< 20%' ? 'orange' :
+                                                        d == '20 - 100%' ? 'green' :
+                                                            d == 'External Power' ? 'blue' :
+                                                                d == 'Unable to measure' ? 'black' :
+                                                                    '#FFEDA0';
+        }
+
+    </script>
+    <script src="~/js/signalr/dist/browser/signalr.js"></script>
+    <script src="~/js/wanesy.js"></script>
+    <script src="~/js/CustomScript.js"></script>
+}

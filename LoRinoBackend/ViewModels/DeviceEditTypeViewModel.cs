@@ -1,0 +1,14 @@
+﻿using LoRinoBackend.ViewModels;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace LoRinoBackend.ViewModels
+{
+    public class DeviceEditTypeViewModel : DeviceCreateTypeViewModel
+    {
+        public int Id { get; set; }
+        public string ExistingPhotoPath { get; set; }
+    }
+}

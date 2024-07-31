@@ -1,0 +1,388 @@
+﻿@model IEnumerable<LoRinoBackend.Models.MoveeEventFrame>
+@using LoRinoBackend.Functions;
+@using Microsoft.EntityFrameworkCore;
+@using Microsoft.AspNetCore.Identity
+
+@inject IMoveeEventRepository eventsList
+@inject IMoveeEventTagRepository eventsTagsRepo
+@inject IDeviceRepository device
+@inject ILocationRepository locations
+@inject UserManager<ApplicationUser> userManager
+@inject IUrlHelper UrlHelper
+@{
+    ViewData["Title"] = "EventsIndex";    
+    ViewBag.Title = "BranCo";
+}
+
+@functions{
+
+    public string findUser(string id)
+    {
+        var userName = "";
+        ApplicationUser user = userManager.Users.Include(x => x.Company).FirstOrDefault(e => e.Id == id);
+        if (user != null)
+        {
+            userName = user.FirstName + " " + user.LastName;
+        }
+        return userName;
+    }
+}
+
+@{
+    var currentUserId = Context.User.Identity.Name;
+    ApplicationUser currentUser = userManager.Users.Include(x => x.Company).SingleOrDefaultAsync(x => x.UserName == currentUserId).Result;
+    var locationsByUser = locations.GetLocationsByUserId(currentUser.Id);
+    var allMsgs = Model.ToList();
+    List<Location> locationList = new List<Location>();
+    var newEventsCount = eventsList.CountAllActiveEvents();
+    var user = await userManager.Users.Include(e => e.Company).FirstOrDefaultAsync();//.FirstFirstOrDefault(i => i.CompanyId == Id);
+
+    var username = Context.User.Identity.Name;
+
+    var photoPath = (currentUser.Company.PhotoPath ?? "no-photo.png");
+    string state = ViewBag.EventState;
+    var controllerName = this.ViewContext.RouteData.Values["controller"].ToString();
+    var actionName = this.ViewContext.RouteData.Values["Action"].ToString();
+    //var actionState = this.ViewContext.RouteData.Values["state"].ToString();
+
+    var sound = ViewBag.Alarm;
+
+    if (User.IsInRole("Super Admin"))
+    {
+        locationList = locations.GetAllLocations().ToList();
+    }
+    else if (User.IsInRole("Admin"))
+    {
+        locationList = locations.GetAllLocations().Where(a => a.CompanyId == currentUser.Company.Id).ToList();
+    }
+    else if (locationsByUser.Count() > 0)
+    {
+        locationList = locations.GetLocationsByUserId(currentUser.Id).ToList();
+    }
+
+
+    IEnumerable<Device> allDevices;
+
+    if (User.IsInRole("Super Admin"))
+    {
+        allDevices = device.GetAllData();
+    }
+    else if (User.IsInRole("Admin"))
+    {
+        allDevices = device.GetAllData().Where(a => a.Company.Id == currentUser.Company.Id);
+    }
+    else
+    {
+        allDevices = device.GetMineDevice(currentUser.Company.Id);
+    }
+
+    List<string> devIds = new List<string>();
+
+    foreach (var dev in allDevices)
+    {
+        devIds.Add(dev.DevEui);
+    }
+    List<MoveeEventFrame> moveeEvents = new List<MoveeEventFrame>();
+
+    if (User.IsInRole("Super Admin"))
+    {
+        moveeEvents = eventsList.GetAllData().Where(a => a.AlarmCount > 0 && a.IsCleared == false).ToList();
+    }
+    else if (User.IsInRole("Admin"))
+    {
+        moveeEvents = eventsList.GetAllData().Where(a => a.AlarmCount > 0 && a.IsCleared == false).ToList();
+        moveeEvents = (from el in locationList
+                       join e in moveeEvents on el.Id equals e.LocationId
+                       where el.CompanyId == currentUser.Company.Id
+                       select e
+                  ).ToList();
+
+    }
+    else if (locationsByUser.Count() > 0)
+    {
+        moveeEvents = eventsList.GetAllData().Where(a => a.AlarmCount > 0 && a.IsCleared == false).ToList();
+
+        moveeEvents = (from l in locationsByUser
+                       join e in moveeEvents on l.Id equals e.LocationId
+                       select e
+                  ).ToList();
+    }
+}
+<link rel="stylesheet" href="~/css/spinner.css"/> 
+<style type="text/css">
+    .State0 { background-color:green; }
+    .State1 { background-color: #b7113c; color: white;}
+    .State2 { background-color:#FFA500; color:white;}
+
+    .btn-circle.btn-xl {
+        width: 20px;
+        height: 20px;
+        padding: 13px 13px;
+        border-radius: 120px;
+        font-size: 15px;
+        text-align: center;
+    }
+
+    .dropdown-toggle {
+        position: center;
+        top: 0;
+        left: 0;
+        padding-top: 0;
+        padding-right: 0;
+        padding-bottom: 0;
+        padding-left: 0;
+        height: 100%;
+        width: 100%;
+        text-align: center;
+
+    }
+
+    .bootstrap-select {
+        width: 220px;
+        height: 38px;
+
+    }
+
+    .active-element {
+        cursor: pointer;
+        color: blue !important;
+    }
+
+    .active-element:hover {
+        /* Change color on hover */
+        color: orange !important;
+    }
+
+</style>
+
+<div class="row">
+
+    <div class="col-10 d-flex justify-content-start">
+        <div class="row m-2">
+            <div asp-controller="MV" asp-action="EventsIndex" method="get" class="form-inline">
+                <span class="m-2">Pretraga događaja: </span>
+                <!-- Dodajemo form-group i mb-2 za okvir i razmak -->
+                <div class="form-group mb-2">
+                    <select id="tagId" name="tagId" title="Filter Tagova" asp-items="@ViewBag.Tags" multiple data-live-search="true"></select> <!-- Dodajemo form-control za stiliranje select elementa -->
+                    <input id="filter" type="text" name="filter" class="form-control" /> <!-- Dodajemo form-control za stiliranje input elementa -->
+
+                    
+                    <input onclick="pretraga()" id="tagId" type="submit" value="Pretraži" class="btn btn-default mb-2" style="margin-left: 10px;" /> <!-- Dodajemo mb-2 za razmak -->
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-3 form-inline">
+        <a class="nav-link status-link active-element" id="active">Aktivni</a>
+        <a class="nav-link status-link active-element" id="acked">Potvrđeni</a>
+        <a class="nav-link status-link active-element" id="cleared">Zatvoreni</a>
+        <a class="nav-link status-link text-red-600" id="all">Svi</a>
+    </div>
+    
+</div>
+
+<div id="EventsIndexPartial"></div>
+
+@section Scripts {
+
+    <script>
+        function formatTimestamp(UNIX_timestamp, useMonthNames = true) {
+            const a = new Date(UNIX_timestamp);
+            const months = useMonthNames ?
+                ['Siječanj', 'Veljača', 'Ožujak', 'Travanj', 'Svibanj', 'Lipanj', 'Srpanj', 'Kolovoz', 'Rujan', 'Listopad', 'Studeni', 'Prosinac'] :
+                ['1.', '2.', '3.', '4.', '5.', '6.', '7.', '8.', '9.', '10.', '11.', '12.'];
+
+            const year = a.getFullYear();
+            const month = months[a.getMonth()];
+            const date = a.getDate();
+            const hour = a.getHours();
+            const min = a.getMinutes().toString().padStart(2, '0');
+            const sec = a.getSeconds().toString().padStart(2, '0');
+
+            return `${date}.${month}${year}. ${hour}:${min}:${sec}`;
+        }
+
+        // Helper function to remove elements from an array
+        function arrayRemove(arr, value) {
+            return arr.filter(ele => ele !== value);
+        }
+
+        var jsonTags = @Html.Raw(Json.Serialize(eventsTagsRepo.GetActiveMoveeTags()));
+        var eventList = @Html.Raw(Json.Serialize(moveeEvents));
+        var locationJson = @Html.Raw(Json.Serialize(locationList));
+        var json = @Html.Raw(Json.Serialize(allMsgs));
+
+        var filter = [];
+        var state;
+        let list;
+        let tagIds = document.getElementById("tagId");
+        var tags = [];
+
+        // Function to create a button element
+        function createButton(innerText, className, margin = "5px") {
+            const button = document.createElement("button");
+            button.innerText = innerText;
+            button.className = className;
+            button.style.margin = margin;
+            return button;
+        }
+
+        // Function to append filter buttons dynamically
+        function appendFilterButtons() {
+            if (!list) {
+                let $span = $('<span class="m-2">Kriterij pretrage događaja: </span>');
+                let $div = $('<div id="myTags"></div>');
+                $('.row.m-2').append($span, $div);
+                list = document.getElementById("myTags");
+            }
+
+            $('#myTags').empty();
+
+            if (tags) {
+                tags.forEach(tag => list.appendChild(createButton(tag, "btn btn-default")));
+            }
+
+            if (filter.length) {
+                list.appendChild(createButton(filter, "btn btn-info"));
+            }
+
+            if (state && state !== "all") {
+                let btnClass = "btn btn-default";
+                let btnText = "Aktivni";
+
+                if (state === "cleared") {
+                    btnClass = "btn btn-success";
+                    btnText = "Zatvoreni";
+                } else if (state === "acked") {
+                    btnClass = "btn btn-warning";
+                    btnText = "Potvrđeni";
+                }
+
+                list.appendChild(createButton(btnText, btnClass));
+            }
+        }
+
+        $('select').selectpicker();
+
+        var allDevices = [];
+
+        function arrayRemove(arr, value) {
+
+            return arr.filter(function (ele) {
+                return ele != value;
+            });
+        }
+
+        // Function to handle events on status-link click
+        function handleStatusLinkClick() {
+            $(".status-link").removeClass("text-red-600").addClass("active-element");
+            $(this).removeClass("active-element").addClass("text-red-600");
+            pretraga();
+        }
+
+        function updateClasses(state) {
+            // List of all states
+            const states = ['active', 'acked', 'cleared', 'all'];
+
+            // Loop through each state
+            states.forEach(s => {
+                const element = document.getElementById(s);
+
+                if (s === state) {
+                    element.classList.remove('active-element');
+                    element.classList.add('text-red-600');
+                } else {
+                    element.classList.add('active-element');
+                    element.classList.remove('text-red-600');
+                }
+            });
+        }
+
+        // Function to reload partial data via AJAX
+        async function reloadPartial(filter = "", state = "", page = 1, perPage = 10, tagId = "") {
+            try {
+                $("body").append("<div class='spinner'></div>");
+                console.log(filter);
+                const data = await $.ajax({
+                    type: "GET",
+                    url: "/MV/EventsIndexPartial",
+                    data: { filter, state, page, perPage, tagIds: tagId }
+                });
+
+                $("#EventsIndexPartial").fadeOut(200).hide().html(data).fadeIn(200);
+                history.pushState({}, "", `/MV/EventsIndex?filter=${filter}&state=${state}&page=${page}&perPage=${perPage}&tagIds=${tagId}`);
+            } catch (error) {
+                alert(`HTTP Status: ${error.status}; Error Text: ${error.responseText}`);
+            } finally {
+                $(".spinner").remove();
+            }
+        }
+
+        function pretraga() {
+            tags = Array.from(tagIds).filter(option => option.selected).map(option => option.label);
+            const tagIdsString = Array.from(tagIds).filter(option => option.selected).map(option => option.value).join(',');
+
+            filter = document.getElementById("filter").value;
+            state = document.querySelector(".text-red-600.status-link")?.id;
+
+            appendFilterButtons();
+            reloadPartial(filter, state, "", "", tagIdsString);
+
+            return true;
+        }
+
+
+        // Function to check and push tags
+        function checkAndPush(x, tagIds) {
+            const values = x.split(',');
+            return Array.from(tagIds).filter(option => values.includes(option.value)).map(option => option.label);
+        }
+
+        // Document ready function to initialize event listeners and load initial data
+        $(document).ready(function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            filter = urlParams.get('filter') || "";
+            state = urlParams.get('state') || "";
+            const page = parseInt(urlParams.get('page'), 10) || 1;
+            const perPage = parseInt(urlParams.get('perPage'), 10) || 10
+            const tagId = urlParams.get('tagIds') || "";
+            document.getElementById("filter").value = filter;
+            
+            $(".status-link").click(handleStatusLinkClick);
+            updateClasses(state);
+            reloadPartial(filter, state, page, perPage, tagId);
+            tags = checkAndPush(tagId, tagIds);
+            appendFilterButtons();
+        });
+
+        function onChange(id, eventCreationTime, alarmCount, locationId, guid, moveeEventFrameId) {
+            const locationName = locationJson.find(p => p.id == locationId)?.name || '';
+
+            $('#eventTable tbody').prepend('<tr>')
+                .children('tr:first')
+                .append(`
+              <td><input class="btn State1 btn-circle btn-xl" type="button"></td>
+              <td scope="col">${moveeEventFrameId}</td>
+              <td scope="col">${formatTimestamp(eventCreationTime, false)}</td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td scope="col">${alarmCount}</td>
+              <td scope="col">${locationName}</td>
+              <td><input class="btn btn-default" style="max-width: 10vw" type="button" value="Detalji" onclick="window.open('./EventsDetails?guid=${guid}', true)"></td>
+            `);
+
+            playAudio();
+            myShowFunction();
+            Msg2();
+        }
+
+        
+    </script>
+}

@@ -1,0 +1,28 @@
+﻿@model LoRinoBackend.Models.MoveeTag
+
+@{
+    ViewData["Title"] = "DeleteTag";
+}
+
+<h3>Jeste li sigurni?</h3>
+<div>
+    <hr />
+    <dl class="row">
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.Name)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.Name)
+        </dd>
+    </dl>
+    
+    <form asp-action="Delete">
+        <input type="hidden" asp-for="Id" />
+        <a asp-action="Index" class="btn btn-default">Natrag</a>
+        <input type="submit" value="Obriši" class="btn btn-default" />
+        
+    </form>
+</div>
+@section Scripts {
+    <script src="~/js/CustomScript.js"></script>
+}

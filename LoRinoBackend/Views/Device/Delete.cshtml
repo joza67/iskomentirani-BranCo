@@ -1,0 +1,38 @@
+﻿@model Device
+
+@{
+    ViewBag.Title = "Brisanje uređaja";
+}
+
+<div class="row justify-content-center m-3">
+    <div class="col-sm-3">
+        <div class="card">
+            <div class="card-header">
+                <h1>@Model.Name</h1>
+            </div>
+
+            <div class="card-body text-left">
+                <h4>DevEui : @Model.DevEui</h4>
+                <h4>Tip : @Model.DeviceType.Name</h4>
+                <h4>Tvrtka : @Model.Company.Name</h4>
+                <h4>Lokacija : @Model.Location.Name</h4>
+
+
+            </div>
+            <div class="card-footer text-center">
+                <form method="post" asp-action="Delete" asp-route-id="@Model.Id">
+                    <a asp-controller="Device" asp-action="Index" class="btn btn-default">Nazad</a>
+                    <span id="deleteSpan_@Model.Id">
+                        <button type="submit" class="btn btn-default" style="width: auto">Izbriši uređaj</button>
+                    </span>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/CustomScript.js"></script>
+    <script src="~/js/signalr/dist/browser/signalr.js"></script>
+    <script src="~/js/wanesy.js"></script>
+}

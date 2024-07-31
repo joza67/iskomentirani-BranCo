@@ -1,0 +1,542 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore;
+@using System.Data;
+@using System.Threading
+
+@inject SignInManager<ApplicationUser> signInManager
+@inject UserManager<ApplicationUser> userManager
+@inject IDeviceRepository device
+@inject ILocationRepository locations
+@inject IMoveeEventRepository eventRepo
+
+@{
+    var currentUserId = Context.User.Identity.Name;
+    ApplicationUser currentUser = userManager.Users.Include(x => x.Company).SingleOrDefaultAsync(x => x.UserName == currentUserId).Result;
+    var user = await userManager.Users.Include(e => e.Company).FirstOrDefaultAsync();//.FirstFirstOrDefault(i => i.CompanyId == Id);
+
+    var username = Context.User.Identity.Name;
+
+    var photoPath = (currentUser.Company.PhotoPath ?? "no-photo.png");
+
+    var controllerName = this.ViewContext.RouteData.Values["controller"].ToString();
+    var actionName = this.ViewContext.RouteData.Values["Action"].ToString();
+
+    var sound = ViewBag.Alarm;
+
+
+    var locationsByUser = locations.GetLocationsByUserId(currentUser.Id);
+    List<int> locationListIds = new List<int>();
+
+    if (User.IsInRole("Super Admin"))
+    {
+        locationListIds = locations.GetAllLocations().Select(a => a.Id).ToList();
+    }
+    else if (User.IsInRole("Admin"))
+    {
+        locationListIds = locations.GetAllLocations().Where(a => a.CompanyId == currentUser.Company.Id).Select(a => a.Id).ToList();
+    }
+    else if (locationsByUser.Count() > 0)
+    {
+        locationListIds = locations.GetLocationsByUserId(currentUser.Id).Select(a => a.Id).ToList();
+    }
+
+    var newEvents = eventRepo.GetAllActiveEvents().Where(e => locationListIds.Contains(e.LocationId)).ToList();
+    var confirmedEvents = eventRepo.GetAllConfirmedEvents().Where(e => locationListIds.Contains(e.LocationId)).ToList();
+
+    var newEventsCount = newEvents.Count();
+    var confirmedEventsCount = confirmedEvents.Count();
+
+
+}
+@{
+    DateTimeOffset now = DateTimeOffset.UtcNow;
+    long unixTimeMilliseconds = now.ToUnixTimeMilliseconds();
+    List<Device> deviceList = new List<Device>();
+    deviceList = device.GetAllData().ToList();
+
+
+
+}
+
+@{
+    var allMsgs = Model;
+
+
+    List<int> ids = new List<int>();
+    var allDevices = device.GetMineDevice(currentUser.Company.Id);
+    List<string> devIds = new List<string>();
+
+    Dictionary<string, string> devNames = new Dictionary<string, string>();
+    foreach (var dev in allDevices)
+    {
+        devIds.Add(dev.DevEui);
+        devNames.Add(dev.DevEui, dev.Name);
+    }
+}
+
+<html>
+<head>
+
+    <meta name="viewport" content="width=device-width" />
+    @*<environment include="Development">
+        <link href="~/lib/bootstrap/css/bootstrap.css" rel="stylesheet" />
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css" integrity="sha384-zCbKRCUGaJDkqS1kPbPd7TveP5iyJE0EjAuZQTgFLD2ylzuqKfdKlfG/eSrtxUkn" crossorigin="anonymous">
+        <link href="~/css/sb-admin-2.css" rel="stylesheet" />
+        <link href="~/css/site.css" rel="stylesheet" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.2/css/all.min.css" integrity="sha512-1sCRPdkRXhBV2PBLUdRb4tMg1w2YPf37qatUFeS7zlBy7jJI8Lf4VHwWfZZfpXtYSLy85pkm9GaYVYMfw5BC1A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+        <link href="~/css/navbar-fixed-left.min.css" rel="stylesheet" />
+    </environment>
+    <environment exclude="Development">
+        <link rel="stylesheet"
+              href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+              integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T"
+              crossorigin="anonymous"
+              asp-fallback-href="~/lib/bootstrap/css/bootstrap.min.css"
+              asp-fallback-test-class="sr-only"
+              asp-fallback-test-property="position"
+              asp-fallback-test-value="absolute"
+              asp-suppress-fallback-integrity="true">
+        <link href="~/css/sb-admin-2.css" rel="stylesheet" />
+        <link href="~/css/site.css" rel="stylesheet" />
+
+        <link href="~/css/navbar-fixed-left.min.css" rel="stylesheet" />
+    </environment>*@
+
+
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css" integrity="sha384-zCbKRCUGaJDkqS1kPbPd7TveP5iyJE0EjAuZQTgFLD2ylzuqKfdKlfG/eSrtxUkn" crossorigin="anonymous">
+        <link href="~/css/sb-admin-2.css" rel="stylesheet" />
+        <link href="~/css/site.css" rel="stylesheet" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.2/css/all.min.css" integrity="sha512-1sCRPdkRXhBV2PBLUdRb4tMg1w2YPf37qatUFeS7zlBy7jJI8Lf4VHwWfZZfpXtYSLy85pkm9GaYVYMfw5BC1A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+        <link href="~/css/navbar-fixed-left.min.css" rel="stylesheet" />
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet">
+    <link rel="shortcut icon" href="~/images/InSite/BranCo-icon.png" />
+
+    <script src="~/lib/jquery/jquery.js"></script>
+    <script src="~/lib/jquery/jquery.timeago.js"></script>
+
+    @*<script src="~/lib/jquery-validate/jquery.validate.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.js"></script>
+    <script src="~/lib/popper.js/umd/popper.js"></script>
+
+    <script src="~/lib/bootstrap/js/bootstrap.js"></script>*@
+
+@*    <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-fQybjgWLrvvRgtW6bFlB7jaZrFsaBXjsOMm/tB9LTS58ONXgqbR9W8oWht/amnpF" crossorigin="anonymous"></script>
+    *@
+    <script src="~/js/sb-admin-2.js"></script>
+    <script src="~/js/CustomScript.js"></script>
+
+
+    @if (IsSectionDefined("Styles"))
+    {
+        @RenderSection("Styles", required: true)
+    }
+
+    <title>@ViewBag.Title</title>
+</head>
+
+<body>
+
+    <div class="container-fluid">
+        <nav class="navbar navbar-expand-md shadow navbar-dark navbar-custom fixed-left" style="z-index: 1000;">
+            <a class="navbar-brand" asp-controller="/" asp-action=""><img class="logo" src="~/images/InSite/BranCo-logo.png"></a>
+            <button class="navbar-toggler collapsed" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault"
+                    aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            @*<input type="button" value="Submit" onclick="AjaxFormSubmit('70B3D531C0002CE2')" />*@
+            
+            @*<input type="button" value="multi" onclick="multi()" />*@
+            @*<form asp-action="ScrambleTest" asp-controller="TestAPI" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" id="method" name="method" value="@actionName" />
+            <input type="hidden" id="controller" name="controller" value="@controllerName" />
+            <div class="form-group">
+            </div>
+            <div class="form-group d-flex justify-content-between">
+            <input type="submit" value="Test" class="btn btn-default" />
+            </div>
+            </form>*@
+
+            @if (controllerName == "MV" && actionName == "Index" || controllerName == "MV" && actionName == "EventsIndex")
+            {
+
+                <button style="display:none;" class="alertbutton" id="alertButton" onclick="myAudio.pause(); myHideFunction();">Utišaj Alarm</button>
+            }
+            else
+            {
+                <a asp-controller="MV" asp-action="" style="display:none;" class="alertbutton" id="alertButton" onclick="myAudio.pause(); myHideFunction();">Novi Alarm</a>
+            }
+            @*<ul>
+            <li class="nav-item mr-3" style="width: 40px;">
+            <a asp-controller="MV" asp-action="" class="nav-link nav-icon iconClass">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span class="badge badge-light">@newEventsCount</span>
+            </a>
+            </li>
+            <li class="nav-item mr-3" style="width: 40px;">
+            <a asp-controller="MV" asp-action="" class="nav-link nav-icon iconClass">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            <span class="badge badge-light">@confirmedEventsCount</span>
+            </a>
+            </li>
+            </ul>*@
+
+
+
+
+
+
+            @*<a class="nav-link text-gray-800" asp-controller="MV" asp-action=""><i class="fa-solid fa-triangle-exclamation"></i>@newEventsCount</a>
+            <a class="nav-link text-gray-800" asp-controller="MV" asp-action=""><i class="fa-solid fa-circle-exclamation"></i>@confirmedEventsCount</a>*@
+
+
+
+            <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+                <ul class="navbar-nav nav" role="tablist">
+
+                    @if ((controllerName == "MV" && actionName == "Index") || (controllerName == "" && actionName == ""))
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link text-red-600" asp-controller="MV" asp-action="">Karta</a>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link text-gray-600" asp-controller="MV" asp-action="">Karta</a>
+                        </li>
+                    }
+                    
+                    @if (User.IsInRole("Super Admin"))
+                    {
+                        if (controllerName == "MV" && actionName == "EventList")
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-red-600" asp-controller="MV" asp-action="EventList">Alarmi</a>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-gray-600" asp-controller="MV" asp-action="EventList">Alarmi</a>
+                            </li>
+                        }
+                        
+                        
+                    }
+
+
+                    @if (User.IsInRole("Super Admin") || User.IsInRole("Admin") || locationsByUser.Count() > 0)
+                    {
+                        if (controllerName == "MV" && actionName == "EventsIndex")
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-red-600" asp-controller="MV" asp-action="EventsIndex">Događaji</a>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-gray-600" asp-controller="MV" asp-action="EventsIndex">Događaji</a>
+                            </li>
+                        }
+
+
+                        @if (controllerName == "Location" && actionName == "ListLocations")
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-red-600" asp-controller="Location" asp-action="ListLocations">Lokacije</a>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-gray-600" asp-controller="Location" asp-action="ListLocations">Lokacije</a>
+                            </li>
+                        }
+                        
+                    }
+                    @if (User.IsInRole("Super Admin"))
+                    {
+                        <li class="nav-item">
+                            <div class="dropdown">
+                                <button class="nav-link border-0 bg-transparent text-gray-600" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    Administracija
+                                </button>
+
+
+                                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                    <a class="dropdown-item" asp-controller="Administration" asp-action="ListUsers">Korisnici</a>
+                                    <a class="dropdown-item" asp-controller="Administration" asp-action="ListRoles">Uloge</a>
+                                    <a class="dropdown-item" asp-controller="Administration" asp-action="ListCompanies">Tvrtke</a>
+                                    <a class="dropdown-item" asp-controller="Location" asp-action="ListLocations">Lokacije</a>
+                                    <a class="dropdown-item" asp-controller="Device" asp-action="Index">Uređaji</a>
+                                    <a class="dropdown-item" asp-controller="MoveeTag" asp-action="Index">Tagovi</a>
+                                    <a class="dropdown-item" asp-controller="MoveeTag" asp-action="Create">Dodaj tag</a>
+
+                                </div>
+                            </div>
+                        </li>
+                    }
+                    <li class="nav-item">
+
+                    </li>
+                </ul>
+                <div>
+                    @if (signInManager.IsSignedIn(User))
+                    {
+                        <div class="navbar-nav nav dropdown no-arrow">
+                            <div class="dropdown-toggle text-gray-400" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <div class=""><span class="md-lg-inline mr-3 text-gray-600">@currentUser.FirstName @currentUser.LastName</span></div>
+                            </div>
+
+                            <!-- Dropdown - User Information -->
+                            <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in" style="z-index: 9999 !important" aria-labelledby="userDropdown">
+                                <a class="">
+                                    <div class="companyLogo mb-3"><img src="~/images/company/@photoPath" /></div>
+
+                                </a>
+                                <a asp-controller="Administration" asp-action="Profile" class="dropdown-item">
+                                    <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
+                                    Profil
+                                </a>
+                                @if (User.IsInRole("Super Admin"))
+                                {
+                                    <a asp-controller="Administration" asp-action="EditUser" asp-route-id="@currentUser.Id" class="dropdown-item">
+                                        <i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>
+                                        Postavke
+                                    </a>
+                                }
+                                <a class="dropdown-item" asp-controller="Account" asp-action="ChangePassword">
+                                    <i class="fas fa-list fa-sm fa-fw mr-2 text-gray-400"></i>
+                                    Promjena lozinke
+                                </a>
+
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="#" data-toggle="modal" data-target="#logoutModal">
+                                    <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
+                                    Odjava
+                                </a>
+                            </div>
+                        </div>
+                    }
+
+                </div>
+                
+                @if (locationsByUser.Count() > 0 || User.IsInRole("Super Admin"))
+                {
+                    <a asp-controller="MV" asp-action="EventsIndex" asp-route-state="active" class="nav-link nav-icon iconClass1">
+                        <i class="fa-solid fa-triangle-exclamation fa-xl iconClass1"></i>
+                        <span id="alarmTagCount" class="badge badge-upper"></span>
+                    </a>
+
+                    <a asp-controller="MV" asp-action="EventsIndex" asp-route-state="acked" class="nav-link nav-icon iconClass2">
+                        <i class="fa-solid fa-triangle-exclamation fa-xl iconClass2"></i>
+                        <span class="badge badge-upper">@confirmedEventsCount</span>
+                    </a>
+                }
+
+                <div class="companyLogo mr-3"><img src="~/images/company/@photoPath" /></div>
+            </div>
+            @if (User.IsInRole("Super Admin"))
+            {
+            <input class="btn btn-default" type="button" value="TEST" onclick="getRandom()" />
+            }
+
+        </nav>
+    </div>
+    <div class="renderBody">
+        @RenderBody()
+    </div>
+
+    <div class="modal fade in" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="false">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Odjava</h5>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">Jeste li sigurni da se želite odjaviti?</div>
+                <div class="modal-footer">
+                    <form method="">
+                        <button class="btn btn-default" type="button" data-dismiss="modal">Odustani</button>
+                    </form>
+                    <form method="post" asp-controller="account" asp-action="logout">
+                        <button type="submit" style="width:auto"
+                                class="btn btn-default">
+                            Odjava
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <audio id="audioAlert" preload="auto" controls loop>
+        <source src="~/sound/beep.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+    <script>
+        var locIdsList = @Html.Raw(Json.Serialize(locationListIds));
+        var devices = @Html.Raw(Json.Serialize(deviceList));
+        var num = @newEventsCount;
+        document.getElementById("alarmTagCount").innerHTML = num;
+
+        myAudio = document.getElementById('audioAlert');
+        function playAudio() {
+            myAudio.play();
+        }
+
+        function pauseAudio() {
+            myAudio.pause();
+        }
+
+        const min = 2;
+        const max = 5;
+
+        function randomRange() {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+
+        }
+
+        function rand() {
+            var rndLoc = locIdsList[Math.floor(Math.random() * locIdsList.length)];
+            return rndLoc;
+        }
+
+        function getRandom() {
+            var n = randomRange();
+            var locId = rand();
+            var rndDevices = devices.filter(function (item) {
+                return item.locationId === locId;
+            });
+
+            var result = [];
+            var len = rndDevices.length;
+            var taken = new Array(len);
+
+            if (n > len) {
+                throw new RangeError("sendRandomMessage: more elements taken than available");
+            }
+
+            while (n--) {
+                var x = Math.floor(Math.random() * len);
+                var randomId = generateRandomId();
+                var randomFCntUp = getRandomInt(5000, 25000);
+
+                var message = {
+                    "id": randomId,
+                    "endDevice": {
+                        "devEui": rndDevices[x].devEui,
+                        "cluster": {}
+                    },
+                    "payload": "d91b04fe7afb4afcb2aa",
+                    // "recvTime": getRandomInt(Date.now(), Date.now() + 1000),
+                    "recvTime": Date.now(),
+                    "gwInfo": [{}],
+                    "fCntUp": randomFCntUp
+                };
+
+                result.push(message);
+                taken[x] = --len in taken ? taken[len] : len;
+            }
+
+            result.forEach(function (message) {
+                AjaxFormSubmit(message);
+            });
+
+        }
+
+        function generateRandomId() {
+            var randomId = "";
+            var characters = "0123456789ABCDEF";
+
+            for (var i = 0; i < 24; i++) {
+                randomId += characters.charAt(Math.floor(Math.random() * characters.length));
+            }
+
+            return randomId;
+        }
+
+        function getRandomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function multi() {
+            var dev = '70B3D531C0002CE2';
+            for (let i = 0; i < 5; i++) {
+                AjaxFormSubmit(dev);
+                //console.log(i);
+            }
+            
+        }
+        function AjaxFormSubmit(message) {
+
+            var JSONString = JSON.stringify(message);
+
+            $.ajax({
+                type: "POST",
+                url: "/Home/Create",
+                data: JSONString,
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                async: false,
+                success: function (response) {
+                    if (response == true) {
+                        alert("Form submitted!");
+                    }
+                    if (response == null) {
+                        alert("Invalid Form data!");
+                    }
+                }
+            });
+
+        }
+
+
+    </script>
+
+    
+
+    <script>
+        function Msg2() {
+            document.getElementById('alarmTagCount').innerHTML = +num + +1;
+            num++;
+        }
+        
+    </script>
+
+    <script>
+    var onChange = function (id, eventCreationTime, alarmCount, locationId) {
+    if (locIdsList.includes(locationId)) {
+    myAudio.play();
+    myShowFunction();
+
+    Msg2();
+
+    }
+    }
+    </script>
+    @*<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>*@
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/css/bootstrap-select.css" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/js/bootstrap-select.min.js"></script>
+    <script type="text/javascript" src="https://ajax.cdnjs.com/ajax/libs/json2/20110223/json2.js"></script>
+    
+    <script src="~/js/signalr/dist/browser/signalr.js"></script>
+    <script src="~/js/wanesy.js"></script>
+
+    @if (IsSectionDefined("Scripts"))
+    {
+        @RenderSection("Scripts", required: true)
+    }
+</body>
+</html>

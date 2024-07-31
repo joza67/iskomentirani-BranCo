@@ -1,0 +1,45 @@
+﻿@model IEnumerable<Device>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th class="col-2">
+                @Html.DisplayNameFor(model => model.Name)
+            </th>
+            <th class="col-2">
+                @Html.DisplayNameFor(model => model.DevEui)
+            </th>
+            <th class="col-2">
+                @Html.DisplayNameFor(model => model.Company.Name)
+            </th>
+            <th class="col-2">
+                @Html.DisplayNameFor(model => model.Location.Name)
+            </th>
+
+            <th class="col-2"></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@Html.DisplayFor(modelItem => item.Name)</td>
+                <td>@Html.DisplayFor(modelItem => item.DevEui)</td>
+                <td>@Html.DisplayFor(modelItem => item.Company.Name)</td>
+
+                @if (User.IsInRole("Super Admin"))
+                {
+                    <td>@Html.DisplayFor(modelItem => item.Location.Name)</td>
+                }
+                <td>
+                    <div class="text-center">
+                        <a asp-controller="Device" asp-action="Details" asp-route-id="@item.Id" class="btn btn-default m-1">Detalji</a>
+                        <a asp-controller="Device" asp-action="Edit" asp-route-id="@item.Id" class="btn btn-default m-1">Uredi</a>
+                    </div>
+                </td>
+            </tr>
+
+        }
+    </tbody>
+</table>
+

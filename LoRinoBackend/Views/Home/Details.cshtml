@@ -1,0 +1,23 @@
+﻿@model HomeDetailsViewModel
+
+@{
+    ViewBag.Title = "Details";
+}
+
+<div class="row justify-content-center m-3">
+    <div class="col-sm-3">
+        <div class="card">
+            <div class="card-header">
+                <h1>@Model.CurrentLoRaData.MsgId</h1><br /><hr /><br />
+                <h1>@Model.CurrentLoRaData.EndDeviceData.DevEui</h1>
+            </div>
+
+            <div class="card-body text-center">
+            </div>
+         </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/CustomScript.js"></script>
+}

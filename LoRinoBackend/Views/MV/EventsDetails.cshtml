@@ -1,0 +1,786 @@
+﻿@model MoveeEventFrameViewModel
+
+@using LoRinoBackend.Functions;
+@using Microsoft.EntityFrameworkCore;
+@using Microsoft.AspNetCore.Identity
+
+@inject IMoveeEventRepository eventsList
+@inject IMoveeDataRepository dataFrameRepo
+@*@inject IDeviceRepository device*@
+@inject ILocationRepository locations
+@inject IMoveeEventTagRepository tagRepo
+@inject UserManager<ApplicationUser> userManager
+
+@{
+    var currentUserId = Context.User.Identity.Name;
+    ViewBag.Title = "BranCo";
+}
+
+@functions{
+
+    public string findUser(string id)
+    {
+        var userName = "";
+        ApplicationUser user = userManager.Users.FirstOrDefault(e => e.Id == id);
+        if (user != null)
+        {
+            userName = user.FirstName + " " + user.LastName;
+        }
+        return userName;
+    }
+}
+
+@{
+
+    var allMsgs = Model;
+
+    double longitude = locations.GetLocationById(@Model.moveeEventFrame.LocationId).Long;
+    double latitude = locations.GetLocationById(@Model.moveeEventFrame.LocationId).Lat;
+    double zoom = locations.GetLocationById(@Model.moveeEventFrame.LocationId).MapZoom;
+    int count = ViewBag.Comments.Count;
+    var tagsDD = ViewBag.Tags;
+    var req = TempData["ViewData"];
+
+
+    ApplicationUser currentUser = userManager.Users.Include(x => x.Company).SingleOrDefaultAsync(x => x.UserName == currentUserId).Result;
+    var devices = allMsgs.Devices.Where(a => a.LocationId == Model.moveeEventFrame.LocationId);
+
+    List<MoveeDataFrame> devicesFromLocation = new List<MoveeDataFrame>();
+    //alarmsFromLocation = allMsgs.moveeDataFrames.Where(a => a.AckMsg == true && a.Device.LocationId == Model.moveeEventFrame.LocationId).ToList();
+    //alarmsFromLocation = allMsgs.moveeDataFrames.ToList();
+
+    IEnumerable<Device> alarmDevices;
+    IEnumerable<Device> locationDevices;
+
+    if(User.IsInRole("Super Admin"))
+    {
+        alarmDevices = devices;
+    }
+    else
+    {
+        alarmDevices = devices.Where(c => c.Company.Id == currentUser.Company.Id).ToList();
+    }
+
+    if(User.IsInRole("Super Admin"))
+    {
+        locationDevices = devices;
+    }
+    else
+    {
+        locationDevices = devices.Where(c => c.Company.Id == currentUser.Company.Id).ToList();
+    }
+
+    List<string> alarmIds = new List<string>();
+    List<string> devIds = new List<string>();
+
+
+    //foreach (var locationDevice in locationDevices)
+    //{
+    //    devIds.Add(locationDevice.DevEui);
+    //}
+
+    foreach (var item in devices)
+    {
+        devicesFromLocation.Add(new MoveeDataFrame { DeviceId = item.Id, Device = item, AckMsg = false, MoveeEventFrameId = Model.moveeEventFrame.Id });
+    }
+
+    var deveuiFromDataframe = (from d in devices
+                               join df in devicesFromLocation
+                               on d.Id equals df.DeviceId
+                               where df.AckMsg == false
+                               select d.DevEui).ToList();
+
+    //foreach (var item in devices)
+    //{
+    //    if (!deveuiFromDataframe.Contains(item.DevEui))
+    //    {
+    //        alarmIds.Add(item.DevEui);
+    //    }
+    //}
+
+
+
+
+
+    List<MoveeEventFrame> moveeEvents = new List<MoveeEventFrame>();
+
+    moveeEvents = eventsList.GetAllData().ToList(); //svi događaji
+
+    IEnumerable<Location> eventLocations = new List<Location>();
+    eventLocations = locations.GetAllLocations(); //sve lokacije
+
+    List<MoveeTag> moveeTags = new List<MoveeTag>();
+
+    if (@Model.MoveeTag != null)
+    {
+        moveeTags = @Model.MoveeTag.ToList();
+    }
+    
+
+}
+<style>
+    .btn {
+        /* Dodajte ovo kako biste omogućili postavljanje širine i visine na gumbu */
+        display: inline-block;
+        position: relative;
+    }
+
+    .btn-lg {
+        /* Podesite željenu veličinu gumba */
+        font-size: 18px;
+    }
+
+    .btn-sm {
+        /* Podesite željenu veličinu gumba */
+        font-size: 14px;
+    }
+
+    /* Ovdje postavite željenu boju i izgled za gumb "X" */
+    .btn-default.btn-sm {
+        color: white;
+        background-color: transparent; /* Primjer boje, zamijenite ovu vrijednost s željenom bojom */
+        border-color: transparent; /* Primjer boje ruba, također zamijenite ovu vrijednost s željenom bojom */
+    }
+
+    /* Ovdje postavite gumb "X" u gornji desni kut */
+    .btn {
+        position: relative;
+    }
+
+        .btn .btn-sm {
+            width: 30px; /* Prilagodite veličinu gumba prema potrebi */
+            height: 30px; /* Prilagodite veličinu gumba prema potrebi */
+            position: absolute;
+            top: -12px; /* Pomaknite gumb prema gore */
+            right: -12px; /* Pomaknite gumb prema desno */
+            border-radius: 50%;
+            font-size: 12px;
+        }
+
+</style>
+
+   <div class="row justify-content-center m-0">
+      <div class="col-sm-6 p-1">
+         <div class="card shadow">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+               <div class="float-left">
+                  <h6 class="m-0 font-weight-bold text-primary">Karta</h6>
+               </div>
+              @* <div id="signalStatus" class="btn-circle float-right bg-danger"></div>*@
+            </div>
+            <div class="card-body">
+               <div class="" style="z-index: 1000" id="map"></div>
+            </div>
+         </div>
+      </div>
+      <div class="col-sm-6 p-1">
+         <div class="card shadow">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+               <div class="float-left">
+                  <h6 class="m-0 font-weight-bold text-primary">Događaj</h6>
+               </div>
+            </div>
+            <div class="card-body p-0">
+               <dl class="row" style="padding:20px 0px 0px 20px">
+
+                  <dt class = "col-sm-2">
+                     @Html.DisplayNameFor(model => model.moveeEventFrame.Id)
+                  </dt>
+                  <dd class = "col-sm-3">
+                     @Html.DisplayFor(model => model.moveeEventFrame.Id)
+                  </dd>
+
+                  <dt class = "col-sm-3">
+                     @Html.DisplayNameFor(model => model.moveeEventFrame.EventCreationTime)
+                  </dt>
+                  <dd class = "col-sm-4">
+                     @Unix.ToDateTime(@Model.moveeEventFrame.EventCreationTime)
+                  </dd>
+                  <dt class = "col-sm-2">
+                     @Html.DisplayNameFor(model => model.moveeEventFrame.AlarmCount)
+                  </dt>
+                  <dd class = "col-sm-3">
+                     @Html.DisplayFor(model => model.moveeEventFrame.AlarmCount)
+                  </dd>
+                  <dt class = "col-sm-3">
+                     @Html.DisplayNameFor(model => model.moveeEventFrame.LocationId)
+                  </dt>
+                  <dd class = "col-sm-4">
+                     @locations.GetLocation(@Model.moveeEventFrame.LocationId).Name
+                  </dd>
+                  <dt class = "col-sm-5 text-danger">
+                        @req
+                    </dt>
+               </dl>
+               <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+               <!-- Modal -->
+<div class="modal fade" id="exampleModalack" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form asp-action="AckMoveeEvent" method="post">
+            
+            <input type="hidden" asp-for="moveeEventFrame.EventAckTime" value="@Model.moveeEventFrame.EventAckTime" />
+            <input type="hidden" asp-for="moveeEventFrame.EventAckBy" value="@currentUser.Id" />
+            @*<input type="hidden" asp-for="moveeEventFrame.EventAckBy" value="@Model.moveeEventFrame.EventAckBy" />*@
+            <input type="hidden" asp-for="moveeEventFrame.Id" value="@Model.moveeEventFrame.Id" />
+            <input type="hidden" id="guid" name="guid" value="@Model.moveeEventFrame.Guid" />
+            <input type="hidden" asp-for="moveeEventFrame.IsAcked" value="@Model.moveeEventFrame.IsAcked" />
+            <input type="hidden" asp-for="moveeEventFrame.IsCleared" value="@Model.moveeEventFrame.IsCleared" />
+            <input type="hidden" asp-for="moveeEventFrame.AlarmCount" value="@Model.moveeEventFrame.AlarmCount" />
+            <input type="hidden" asp-for="moveeEventFrame.EventCreationTime" value="@Model.moveeEventFrame.EventCreationTime" />
+            <input type="hidden" asp-for="MoveeEventTag" value="@Model.MoveeEventTag" />
+            <input type="hidden" asp-for="MoveeTag" value="@Model.MoveeTag" />
+            <input type="hidden" asp-for="Devices" value="@Model.Devices" />
+            <input type="hidden" asp-for="LogViewModel" value="@Model.LogViewModel" />
+        <div class="modal-content">
+            <div class="modal-header">
+
+                                    <span aria-hidden="true" data-dismiss="modal">&times;</span>
+            </div>
+            <div class="modal-body">
+
+            <div class="form-group">
+                <label asp-for="@Model.moveeEventFrame.AckMessage" class="control-label"></label>
+                <textarea asp-for="@Model.moveeEventFrame.AckMessage" class="form-control" rows="5"></textarea>
+                        <div class = "col-sm-10 text-danger">
+                        @req
+                    </div>
+            </div>
+                                    
+       </div>
+            <div class="modal-footer">
+                <input type="submit" value="Potvrdi" class="btn btn-default" />
+                                    
+                     <span asp-validation-for="@Model.moveeEventFrame.AckMessage" class="text-danger"></span>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Odustani</button>
+            </div>
+        </div>
+        </form>
+    </div>
+</div>
+                <div class="modal fade" id="exampleModalclear" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form asp-action="ClearMoveeEvent" method="post">
+            
+            <input type="hidden" asp-for="moveeEventFrame.EventClearTime" value="@Model.moveeEventFrame.EventClearTime" />
+            <input type="hidden" asp-for="moveeEventFrame.EventClearBy" value="@currentUser.Id" />
+            @*<input type="hidden" asp-for="moveeEventFrame.EventClearBy" value="@Model.moveeEventFrame.EventClearBy" />*@
+            <input type="hidden" asp-for="moveeEventFrame.Id" value="@Model.moveeEventFrame.Id" />
+            <input type="hidden" id="guid" name="guid" value="@Model.moveeEventFrame.Guid" />
+            <input type="hidden" asp-for="moveeEventFrame.IsAcked" value="@Model.moveeEventFrame.IsAcked" />
+            <input type="hidden" asp-for="moveeEventFrame.IsCleared" value="@Model.moveeEventFrame.IsCleared" />
+            <input type="hidden" asp-for="moveeEventFrame.AlarmCount" value="@Model.moveeEventFrame.AlarmCount" />
+            <input type="hidden" asp-for="moveeEventFrame.EventCreationTime" value="@Model.moveeEventFrame.EventCreationTime" />
+            <input type="hidden" asp-for="MoveeEventTag" value="@Model.MoveeEventTag" />
+            <input type="hidden" asp-for="MoveeTag" value="@Model.MoveeTag" />
+            <input type="hidden" asp-for="Devices" value="@Model.Devices" />
+            <div class="modal-content">
+                <div class="modal-header">
+
+                    <span aria-hidden="true">&times;</span>
+                </div>
+                <div class="modal-body">
+
+                    <div class="form-group">
+                        <label asp-for="@Model.moveeEventFrame.ClearMessage" class="control-label"></label>
+                        <textarea asp-for="@Model.moveeEventFrame.ClearMessage" class="form-control" rows="5"></textarea>
+                        <div class = "col-sm-10 text-danger">
+                        @req
+                    </div>
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <input type="submit" value="Zatvori" class="btn btn-success" />
+                    <span asp-validation-for="@Model.moveeEventFrame.ClearMessage" class="text-danger"></span>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Odustani</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+            </div>
+            <div>
+               @if (@Model.moveeEventFrame.IsAcked == false)
+
+                            {
+                    <!-- Button trigger modal -->
+                    <button type="button" class="btn btn-default m-3" data-toggle="modal" data-target="#exampleModalack">
+                        Potvrdi
+                    </button>
+                    <span></span>
+                            }
+            </div>
+            <div>
+                    @if (Model.moveeEventFrame.IsAcked == true && Model.moveeEventFrame.IsCleared == false)
+                        {
+                    <!-- Button trigger modal -->
+                    <button type="button" class="btn btn-success m-3" data-toggle="modal" data-target="#exampleModalclear">
+                        Zatvori
+                    </button>
+                        }
+                </div>
+         </div>
+         <div class="card shadow">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+               <div class="float-left">
+                  <h6 class="m-0 font-weight-bold text-primary">Tagovi</h6>
+               </div>
+            </div>
+            <div class="card-body">
+               <div class="row">
+                  @if (tagsDD.Count > 0)
+                  {
+                  <div class="col-3">
+                     <form asp-action="AddTagForAck" method="post">
+                        <input type="hidden" name="eventId" value="@Model.moveeEventFrame.Id" />
+                                <input type="hidden" name="guid" value="@Model.moveeEventFrame.Guid" />
+                        <div class="form-group">
+                                    <select name="tagId" class="form-control" asp-items="@tagsDD" style="width:150px;"></select>
+                        </div>
+
+                           <input type="submit" value="Dodaj" class="btn btn-default" />
+
+                     </form>
+                  </div>
+
+                  }
+
+                  <div class="col-9">
+                      <div class="row">
+                     @if (@Model.MoveeEventTag != null)
+                     {
+                     @foreach (var item in @Model.MoveeEventTag)
+                     {
+                         @if (item.Active == true)
+                                {
+                                        var owner = @findUser(tagRepo.GetTagOwner(item.Id));
+                                        <form class="form-inline" asp-action="DisableTagForDetails" method="post">
+                                            <a class="btn btn-gray_tag m-1 text-white" style="cursor:default">
+                                                @Model.MoveeTag.FirstOrDefault(a => a.Id == item.MoveeTagId).Name
+                                                <input type="hidden" name="eventTagId" value="@item.Id" />
+                                                    @if (tagRepo.GetTagOwner(item.Id) == currentUser.Id)
+                                                    {
+                                    <input type="submit" value="X" class="btn btn-default btn-sm" />
+                                                    }
+
+
+                     @*<p class="text-white-50 small ml-2">by @findUser(tagRepo.GetTagOwner(item.Id))</p>*@
+
+                     </a>
+ 
+                     </form>
+                                }
+                     }
+                     }
+
+                  </div>
+                    </div>
+               </div>
+            </div>
+         </div>
+         <div class="card shadow">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+               <div class="float-left">
+                  <div class="float-left">
+                  <h6 class="m-0 font-weight-bold text-primary">Log</h6>
+               </div>
+               </div>
+            </div>
+               <div class="card-body">
+                  <div class="container" style="padding-left: 0px">
+                        <div class="panel-body">
+                           <ul class="chat">
+                              @if (Model.LogViewModel != null)
+                              {
+                                    @foreach (var item in Model.LogViewModel)
+                              {
+                                            <li class="left row">
+                                 <div class="chat-body">
+                                    <div class="header  justify-content-between">
+                                       <strong class="primary-font">@findUser(item.LogBy)</strong>
+
+                                                        @if (@item.MessageType == MessageType.Potvrda)
+                                                        {
+                                                    <span class="badge align-middle badge-pill badge-warning m-1">@item.MessageType</span>
+                                                        }
+                                                        else if (@item.MessageType == MessageType.Zatvaranje)
+                                                        {
+                                                    <span class="badge align-middle badge-pill badge-success m-1">@item.MessageType</span>
+                                                        }
+                                                        else if (@item.MessageType == MessageType.Tag)
+                                                        {
+                                                            <span class="badge align-middle badge-pill badge-secondary m-1">@item.Action @item.MessageType</span>
+                                                        }
+                                                        else if (@item.MessageType == MessageType.Komentar)
+                                                        {
+                                                    <span class="badge align-middle badge-pill badge-secondary m-1">@item.MessageType</span>
+                                                        }
+                                       <small class="pull-right text-muted"> @@
+                                       @*<time class="timeago" datetime=@Unix.ToDateTime(item.EventCommentTime).ToString("yyyy-MM-ddTHH:mm:ssZ")></time></small>*@
+                                       @Unix.ToDateTime(item.LogTime)</small>
+                                    </div>
+                                                        
+                                    <p>
+                                       @item.Message
+                                    </p>
+                                 </div>
+                              </li>
+                              }
+                              }
+                           </ul>
+                        </div>
+                        <div class="panel-footer">
+                           <form asp-action="CreateAckComment" method="post">
+
+                              @if ( Model.MoveeEventComment != null)
+                              {
+                              <input type="hidden" asp-for="MoveeEventComment.Active" value="@Model.MoveeEventComment.Active" />
+                              <input type="hidden" asp-for="MoveeEventComment.EventCommentBy" value="@Model.MoveeEventComment.EventCommentBy" />
+                              <input type="hidden" asp-for="MoveeEventComment.EventCommentTime" value="@Model.MoveeEventComment.EventCommentTime" />
+                              }
+
+                              <input type="hidden" asp-for="MoveeEventComment.MoveeEventFrameId" value="@Model.moveeEventFrame.Id" />
+                              <div class="row">
+                                 <div class="col-10">
+                                    <input asp-for="MoveeEventComment.Comment" id="btn-input" type="text" class="form-control input-sm" placeholder="Komentirajte ovdje..." />
+                                   @* <span asp-validation-for="MoveeEventComment.Comment" class="text-danger"></span>*@
+                                 </div>
+                                 <div class="col-2">
+                                    
+                                    <input type="submit" value="Pošalji" class="btn btn-default" id="btn-chat" />
+                                 </div>
+                              </div>
+                              <br>
+                           </form>
+                  </div>
+               </div>
+
+            <div>
+            </div>
+         </div>
+      </div>
+   </div>
+</div>
+
+
+
+@section Scripts {
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.3.4/dist/leaflet.js"></script>
+    <script src="~/js/leaflet-color-markers.js"></script>
+    <link rel="stylesheet" href="~/css/MarkerCluster.css" />
+    <link rel="stylesheet" href="~/css/MarkerCluster.Default.css" />
+    <script src="~/js/leaflet.markercluster-src.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/mc-datepicker/dist/mc-calendar.min.js"></script>
+
+    <style>
+        #map {
+            height: calc(100vh - 250px);
+            min-height: 50vh;
+        }
+
+        .custom-popup .leaflet-popup-content-wrapper {
+            background: #2c3e50;
+            color: #fff;
+            font-size: 16px;
+            line-height: 24px;
+        }
+
+            .custom-popup .leaflet-popup-content-wrapper a {
+                color: rgba(255,255,255,0.5);
+            }
+
+        .custom-popup .leaflet-popup-tip-container {
+            width: 30px;
+            height: 15px;
+        }
+
+        .custom-popup .leaflet-popup-tip {
+            background: #2c3e50;
+            margin-left: 12px;
+        }
+
+
+        .info {
+            padding: 6px 8px;
+            font: 14px/16px Arial, Helvetica, sans-serif;
+            background: white;
+            background: rgba(255,255,255,0.8);
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            border-radius: 5px;
+            line-height: 24px;
+        }
+
+            .info h4 {
+                margin: 0 0 5px;
+                color: #777;
+            }
+
+        .legend {
+            text-align: left;
+            line-height: 18px;
+            color: #555;
+        }
+
+            .legend i {
+                width: 18px;
+                height: 18px;
+                float: left;
+                margin-right: 8px;
+              
+            }
+    </style>
+    <script>
+        $(document).ready(function () {
+
+        });
+    </script>
+
+    <script>
+
+
+           var map = L.map('map').setView([@latitude, @longitude], @zoom);
+           var osmLayer = L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+                attribution: 'Powered by <a href="http://www.microlink.hr" > Micro-Link</a>',
+                maxZoom: 19,
+                id: 'mapbox/streets-v11',
+                tileSize: 512,
+                zoomOffset: -1,
+                accessToken: 'pk.eyJ1IjoianVrYTk3IiwiYSI6ImNrdTZxcng5eTN2c2IycHF0cnE1Zno5cHcifQ.gfrbRhNsX6XJOZywD-kSSw'
+            });
+
+
+
+        var jsonAlarms = @Html.Raw(Json.Serialize(allMsgs.moveeDataFrames));
+
+        var jsonDevices = @Html.Raw(Json.Serialize(devicesFromLocation));
+
+        var eId = @Html.Raw(Json.Serialize(allMsgs.moveeEventFrame.Id));
+
+        var alarmDevices = [];
+        alarmDevices = @Html.Raw(Json.Serialize(alarmIds));
+        locationDevices = @Html.Raw(Json.Serialize(deveuiFromDataframe));
+        console.log(alarmDevices);
+
+        osmLayer.addTo(map);
+
+        var markersGroup = L.layerGroup(); //({ animateAddingMarkers: true }); //markerClusterGroup
+
+        var currentTime = new Date();
+
+        var customOptions =
+        {
+            'maxWidth': '400',
+            'width': '200',
+            'className': 'popupCustom'
+        }
+
+        var iconList = [];
+
+        var markers = [];
+        console.log(jsonAlarms);
+        jsonDevices.forEach((el) => {
+            console.log(el);
+            var lat = el.device.lat;
+            var lon = el.device.long;
+            var markerLocation = new L.LatLng(lat, lon);
+            var msgRec = new Date(el.recvTime);
+            var _css = "";
+            var _msg = "";
+
+            var diffTime = currentTime - msgRec;
+            if (diffTime > 172800000) {
+                _css = "critical";
+                _msg = "Kritično";
+            }
+            else if (diffTime > 86400000) {
+                _css = "warning";
+                _msg = "Upozorenje";
+            }
+            else {
+                _css = "information";
+                _msg = "Normalno";
+            }
+
+            var singleMarker = {};
+            singleMarker['id'] = el.id;
+            singleMarker['lat'] = lat;
+            singleMarker['lon'] = lon;
+            singleMarker['recvTime'] = el.recvTime;
+            singleMarker['name'] = el.device.name;
+            singleMarker['battery'] = el.battery;
+            singleMarker['devEui'] = el.device.devEui;
+            singleMarker['ackMsg'] = el.ackMsg;
+            singleMarker['cntAlarm'] = el.cntAlarm;
+
+            iconList.push(singleMarker);
+
+
+            var recievedDateTime = ((msgRec.getDate() + 1) < 10 ? "0" : "") + (msgRec.getDate()) + ".";
+            recievedDateTime += (msgRec.getMonth() < 10 ? "0" : "") + (msgRec.getMonth() + 1) + ".";
+            recievedDateTime += msgRec.getFullYear();
+            recievedDateTime += " " + (msgRec.getHours() < 10 ? "0" : "") + msgRec.getHours() + ":";
+            recievedDateTime += (msgRec.getMinutes() < 10 ? "0" : "") + msgRec.getMinutes() + ":";
+            recievedDateTime += (msgRec.getSeconds() < 10 ? "0" : "") + msgRec.getSeconds();
+
+            //var icon = (el.cntAlarm > 0 ? redIcon : (currentTime - msgRec < 172800000 ? (currentTime - msgRec < 86400000 ? greenIcon : yellowIcon) : greyIcon));   // 86400000 is one day in miliseconds
+            var icon = (el.ackMsg == 0 ? greenIcon : redIcon);   // 86400000 is one day in miliseconds
+            var m = L.marker([el.device.lat, el.device.long], { title: el.device.devEui, icon: icon });//.addTo(map);
+            //var customPopup = "<div style=\"line-height: 2rem\">" +
+            //    "<h3 style=\"margin:0\">" + (el.device.name != null ? el.device.name : "No name") + "</h3>" +
+            //    "<br><b>ID uređaja: </b><span class=\"\">" + (el.device.devEui) + "</span>" +
+            //    //"<br>Status uređaja: <span class=\"" + _css + "\" style=\"color: white; text-transform: uppercase; padding: 4px 8px; margin-bottom: 10px; font-weight: bold; border-radius: 4px;\">" + _msg + "</span>" +
+            //    "<br><b>Alarm: </b><span class=" + ("\"information\"") + " style=\"color: white; text-transform: uppercase; padding: 4px 8px; font-weight: bold; border-radius: 4px; \">" + "Nema alarma" + "</span>"
+            //    //"<br><b>Broj alarma: </b><span class=\"\">" + (el.cntAlarm) + "</span>" +
+            //    //"<br><b>Baterija: </b>" + el.battery.toFixed(2) + " V" +
+            //    //"<br>Temperatura: " + el.moveeDataFrame.temperature + " °C" +
+            //    // "<br>Zadnji alarm: " + recievedDateTime +
+               
+
+            //m.bindPopup(customPopup, customOptions);
+            markers.push(m);
+            markersGroup.addLayer(m);
+
+        });
+        markersGroup.addTo(map);
+
+            osmLayer.addTo(map);
+
+            var markersGroup = L.layerGroup(); //({ animateAddingMarkers: true }); //markerClusterGroup
+
+            var currentTime = new Date();
+
+            var customOptions =
+            {
+                'maxWidth': '400',
+                'width': '200',
+                'className': 'popupCustom'
+            }
+
+            var iconList = [];
+
+            var markers = [];
+            console.log(jsonAlarms);
+            jsonAlarms.forEach((el) => {
+                console.log(el);
+                var lat = el.device.lat;
+                var lon = el.device.long;
+                var markerLocation = new L.LatLng(lat, lon);
+                var msgRec = new Date(el.recvTime);
+                var _css = "";
+                var _msg = "";
+
+                var diffTime = currentTime - msgRec;
+                if (diffTime > 172800000) {
+                    _css = "critical";
+                    _msg = "Kritično";
+                }
+                else if (diffTime > 86400000) {
+                    _css = "warning";
+                    _msg = "Upozorenje";
+                }
+                else {
+                    _css = "information";
+                    _msg = "Normalno";
+                }
+
+                var singleMarker = {};
+                singleMarker['id'] = el.id;
+                singleMarker['lat'] = lat;
+                singleMarker['lon'] = lon;
+                singleMarker['recvTime'] = el.recvTime;
+                singleMarker['name'] = el.device.name;
+                singleMarker['battery'] = el.battery;
+                singleMarker['devEui'] = el.device.devEui;
+                singleMarker['ackMsg'] = el.ackMsg;
+                singleMarker['cntAlarm'] = el.cntAlarm;
+
+                iconList.push(singleMarker);
+
+                var recievedDateTime = ((msgRec.getDate() + 1) < 10 ? "0" : "") + (msgRec.getDate()) + ".";
+                recievedDateTime += (msgRec.getMonth() < 10 ? "0" : "") + (msgRec.getMonth() + 1)  + ".";
+                recievedDateTime += msgRec.getFullYear();
+                recievedDateTime += " " + (msgRec.getHours() < 10 ? "0" : "") + msgRec.getHours() + ":";
+                recievedDateTime += (msgRec.getMinutes() < 10 ? "0" : "") + msgRec.getMinutes() + ":";
+                recievedDateTime += (msgRec.getSeconds() < 10 ? "0" : "") + msgRec.getSeconds();
+
+                //var icon = (el.ackMsg == 0 ? redIcon : greenIcon);
+                var icon = redIcon;   // 86400000 is one day in miliseconds
+                var m = L.marker([el.device.lat, el.device.long], { title: el.device.devEui, icon: icon });//.addTo(map);
+                //var customPopup = "<div style=\"line-height: 2rem\">"+
+                //    "<h3 style=\"margin:0\">" + (el.device.name != null ? el.device.name : "No name") + "</h3>" +
+                //    "<br><b>ID uređaja: </b><span class=\"\">" + (el.device.devEui) + "</span>" +
+                //    //"<br>Status uređaja: <span class=\"" + _css + "\" style=\"color: white; text-transform: uppercase; padding: 4px 8px; margin-bottom: 10px; font-weight: bold; border-radius: 4px;\">" + _msg + "</span>" +
+                //    "<br><b>Alarm: </b><span class=" + (el.ackMsg == false ? "\"Critical\"" : "\"information\"") + " style=\"color: white; text-transform: uppercase; padding: 4px 8px; font-weight: bold; border-radius: 4px; \">" + (el.ackMsg == 0 ? "Aktivan" : "Nema alarma") + "</span>" +
+                //    //"<br><b>Broj alarma: </b><span class=\"\">" + (el.cntAlarm) + "</span>" +
+                //    //"<br><b>Baterija: </b>" + el.battery.toFixed(2) + " V" +
+                //    //"<br>Temperatura: " + el.moveeDataFrame.temperature + " °C" +
+                //    // "<br>Zadnji alarm: " + recievedDateTime +
+                //    (el.cntAlarm > 0 ? " <button class=\"btn btn-default\" style=\"max-width: 30vw\" onclick=\"setAck(\'" + el.device.devEui + "\', true)\">Potvrdite</button>" : "") + "</div>";
+
+                //m.bindPopup(customPopup, customOptions);
+                markers.push(m);
+                markersGroup.addLayer(m);
+
+            });
+            markersGroup.addTo(map);
+
+            function markerFunction(id) {
+                for (var i in markers) {
+                    var markerID = markers[i].options.title;
+                    if (markerID == id) {
+                        markers[i].openPopup();
+                    };
+                }
+            }
+
+            var legend = L.control({ position: 'topright' });
+
+            legend.onAdd = function (map) {
+
+                var div = L.DomUtil.create('div', 'info legend'),
+                    grades = ['Bez alarma', 'Alarm'],
+                    labels = [];
+
+
+                for (var i = 0; i < grades.length; i++) {
+                    labels.push(
+                        '<i style="background:' + getColor(grades[i]) + '"></i>' +
+                        grades[i]);
+                }
+
+                div.innerHTML = labels.join('<br>');
+                return div;
+            };
+
+            legend.addTo(map);
+
+            function getColor(d) {
+                return d == 'Bez alarma' ? '#46b600' :
+                    d == 'Izvan mreže' ? 'gray' :
+                        d == 'Alarm' ? '#ea2f00' :
+
+                        d == 'Excellent' ? 'green' :
+                            d == 'Good' ? 'yellow' :
+                                d == 'Fair' ? 'orange' :
+                                    d == 'Poor' ? 'red' :
+                                        d == 'Unknow' ? 'gray' :
+                                            d == '< 5%' ? 'red' :
+                                                d == '< 10%' ? 'yellow' :
+                                                    d == '< 20%' ? 'orange' :
+                                                        d == '20 - 100%' ? 'green' :
+                                                            d == 'External Power' ? 'blue' :
+                                                                d == 'Unable to measure' ? 'black' :
+                                                                    '#FFEDA0';
+            }
+
+
+
+
+    </script>
+    <script src="~/js/signalr/dist/browser/signalr.js"></script>
+    <script src="~/js/wanesy.js"></script>
+    <script src="~/js/CustomScript.js"></script>
+}

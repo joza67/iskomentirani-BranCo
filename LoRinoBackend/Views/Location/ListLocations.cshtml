@@ -1,0 +1,142 @@
+﻿@model IEnumerable<Location>
+
+@{
+    ViewBag.Title = "Lokacije";
+    @ViewBag.CustomMessage
+}
+
+@if (User.IsInRole("Super Admin"))
+        {
+<p>
+    <a class="btn btn-default" asp-action="CreateLocation">Stvori novu lokaciju</a>
+</p>
+        }
+<br />
+
+@if (Model.Any())
+{
+    <table class="table">
+    <thead>
+        <tr>
+        @if (User.IsInRole("Super Admin"))
+        {
+            <th class="col-1">
+                    @Html.DisplayNameFor(model => model.Id)
+            </th>
+        }
+            <th class="col-2">
+                @Html.DisplayNameFor(model => model.Name)
+            </th>
+            <th class="col-1">
+                @Html.DisplayNameFor(model => model.Road)
+            </th>
+            <th class="col-2">
+                @Html.DisplayNameFor(model => model.RoadSection)
+            </th>
+            <th class="col-1">
+                @Html.DisplayNameFor(model => model.Long)
+            </th>
+            <th class="col-1">
+                @Html.DisplayNameFor(model => model.Lat)
+            </th>
+
+                @if (User.IsInRole("Super Admin") || User.IsInRole("Admin"))
+                {
+            <th class="col-1">
+                @Html.DisplayNameFor(model => model.TimerLenght)
+            </th>
+                }
+
+                @if (User.IsInRole("Super Admin"))
+                {
+                    <th class="col-1">
+                        @Html.DisplayNameFor(model => model.Company.Name)
+                    </th>
+                }
+
+            <th class="col-1"></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+            {
+                <tr>
+                    @if (User.IsInRole("Super Admin"))
+                    {
+                        <td>@Html.DisplayFor(modelItem => item.Id)</td>
+                    }
+                    <td><a asp-controller="Location" asp-action="LocationDetails" asp-route-id="@item.Id">@item.Name</a></td>
+                    <td>@Html.DisplayFor(modelItem => item.Road)</td>
+                    <td>@Html.DisplayFor(modelItem => item.RoadSection)</td>
+                    <td>@Html.DisplayFor(modelItem => item.Long)</td>
+                    <td>@Html.DisplayFor(modelItem => item.Lat)</td>
+                    @if (User.IsInRole("Super Admin") || User.IsInRole("Admin"))
+                    {
+                        <td>@Html.DisplayFor(modelItem => item.TimerLenght)</td>
+                    }
+                    @if (User.IsInRole("Super Admin"))
+                    {
+                        <td>@Html.DisplayFor(modelItem => item.Company.Name)</td>
+                    }
+                    <td>
+                        <form method="post" asp-action="LocationDelete" asp-route-id="@item.Id">
+                            
+                                @if (User.IsInRole("Super Admin"))
+                                {
+                                <div class="btn-group">
+                                    <a asp-controller="Location" asp-action="LocationEdit" asp-route-id="@item.Id" class="btn btn-default">Uredi</a>
+                                    <div>
+                                        <span id="confirmDeleteSpan_@item.Id" style="display:none">
+                                            <span>Jeste li sigurni?</span>
+                                            <button type="submit" class="btn btn-default">Potvrdi</button>
+                                            <a href="#" class="btn btn-default"
+                                   onclick="confirmDelete('@item.Id', false)">Odustani</a>
+                                        </span>
+
+                                        <span id="deleteSpan_@item.Id">
+                                            <a href="#" class="btn btn-default"
+                                   onclick="confirmDelete('@item.Id', true)">Obriši</a>
+                                        </span>
+                                    </div>
+                                </div>
+                                }
+
+                            
+                        </form>
+
+                    </td>
+                </tr>
+            
+            }
+        </tbody>
+    </table>
+
+
+}
+else
+{
+    <div class="row">
+        <div class="card">
+            <div class="card-header">
+                Još nije stvorena niti jedna lokacija.
+            </div>
+            @if (User.IsInRole("Super Admin"))
+            {
+                <div class="card-body">
+                    <h5 class="card-title">
+                    Stvori novu lokaciju pritiskom na gumb
+                </h5>
+                
+            </div>
+            }
+        </div>
+    </div>
+
+}
+
+
+@section Scripts {
+
+    <script src="~/js/CustomScript.js"></script>
+}
+    

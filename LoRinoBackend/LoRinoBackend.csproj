@@ -1,0 +1,382 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <AspNetCoreHostingModel>OutOfProcess</AspNetCoreHostingModel>
+    <UserSecretsId>51c0770a-8c88-4362-b3b5-a8936796ecef</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Controllers\GWController.cs" />
+    <Compile Remove="Data\ApplicationDbContext.cs" />
+    <Compile Remove="Migrations\20190428060805_InitialMigration.cs" />
+    <Compile Remove="Migrations\20190428060805_InitialMigration.Designer.cs" />
+    <Compile Remove="Migrations\20190429172047_TestMigration.cs" />
+    <Compile Remove="Migrations\20190429172047_TestMigration.Designer.cs" />
+    <Compile Remove="Migrations\20190430052340_Test.cs" />
+    <Compile Remove="Migrations\20190430052340_Test.Designer.cs" />
+    <Compile Remove="Migrations\20190430052751_SeedEmployeesTable.cs" />
+    <Compile Remove="Migrations\20190430052751_SeedEmployeesTable.Designer.cs" />
+    <Compile Remove="Migrations\20190430055132_AlterEmployeesSeedData.cs" />
+    <Compile Remove="Migrations\20190430055132_AlterEmployeesSeedData.Designer.cs" />
+    <Compile Remove="Migrations\20190503063748_AddPhotoPathToEmployees.cs" />
+    <Compile Remove="Migrations\20190503063748_AddPhotoPathToEmployees.Designer.cs" />
+    <Compile Remove="Migrations\20190503072152_AddPhotoPathToEmployees.cs" />
+    <Compile Remove="Migrations\20190503072152_AddPhotoPathToEmployees.Designer.cs" />
+    <Compile Remove="Migrations\20190504053534_AddPhotoPathColumn.cs" />
+    <Compile Remove="Migrations\20190504053534_AddPhotoPathColumn.Designer.cs" />
+    <Compile Remove="Migrations\20190504065740_AddPhotoPathColumn.cs" />
+    <Compile Remove="Migrations\20190504065740_AddPhotoPathColumn.Designer.cs" />
+    <Compile Remove="Migrations\20190504075013_AddPhotoPathColumn.cs" />
+    <Compile Remove="Migrations\20190504075013_AddPhotoPathColumn.Designer.cs" />
+    <Compile Remove="Migrations\20190601073923_AddingIdentity.cs" />
+    <Compile Remove="Migrations\20190601073923_AddingIdentity.Designer.cs" />
+    <Compile Remove="Migrations\20190626060140_Extend_IdentityUser.cs" />
+    <Compile Remove="Migrations\20190626060140_Extend_IdentityUser.Designer.cs" />
+    <Compile Remove="Migrations\20190626061953_Extend_IdentityUser.cs" />
+    <Compile Remove="Migrations\20190626061953_Extend_IdentityUser.Designer.cs" />
+    <Compile Remove="Migrations\20190807075131_Test.cs" />
+    <Compile Remove="Migrations\20190807075131_Test.Designer.cs" />
+    <Compile Remove="Migrations\20200915113603_initialMigration.cs" />
+    <Compile Remove="Migrations\20200915113603_initialMigration.Designer.cs" />
+    <Compile Remove="Migrations\20200915115325_initialMigration.cs" />
+    <Compile Remove="Migrations\20200915115325_initialMigration.Designer.cs" />
+    <Compile Remove="Migrations\20200915120108_initialMigration.cs" />
+    <Compile Remove="Migrations\20200915120108_initialMigration.Designer.cs" />
+    <Compile Remove="Migrations\20200917081217_initialMigration.cs" />
+    <Compile Remove="Migrations\20200917081217_initialMigration.Designer.cs" />
+    <Compile Remove="Migrations\20200917082017_initialMigration.cs" />
+    <Compile Remove="Migrations\20200917082017_initialMigration.Designer.cs" />
+    <Compile Remove="Migrations\20200917103540_initialMigration.cs" />
+    <Compile Remove="Migrations\20200917103540_initialMigration.Designer.cs" />
+    <Compile Remove="Migrations\20200917103724_initialMigration.cs" />
+    <Compile Remove="Migrations\20200917103724_initialMigration.Designer.cs" />
+    <Compile Remove="Migrations\20200917125828_DecodingData.cs" />
+    <Compile Remove="Migrations\20200917125828_DecodingData.Designer.cs" />
+    <Compile Remove="Migrations\20210517115339_EnlessData.cs" />
+    <Compile Remove="Migrations\20210517115339_EnlessData.Designer.cs" />
+    <Compile Remove="Migrations\20210517115505_EnlessData.cs" />
+    <Compile Remove="Migrations\20210517115505_EnlessData.Designer.cs" />
+    <Compile Remove="Migrations\20210826073034_watteco.cs" />
+    <Compile Remove="Migrations\20210826073034_watteco.Designer.cs" />
+    <Compile Remove="Migrations\20210826073147_watteco.cs" />
+    <Compile Remove="Migrations\20210826073147_watteco.Designer.cs" />
+    <Compile Remove="Migrations\20210826073309_watteco.cs" />
+    <Compile Remove="Migrations\20210826073309_watteco.Designer.cs" />
+    <Compile Remove="Migrations\20210826073617_watteco.cs" />
+    <Compile Remove="Migrations\20210826073617_watteco.Designer.cs" />
+    <Compile Remove="Migrations\20210826073936_watteco.cs" />
+    <Compile Remove="Migrations\20210826073936_watteco.Designer.cs" />
+    <Compile Remove="Migrations\20210826074851_watteco.cs" />
+    <Compile Remove="Migrations\20210826074851_watteco.Designer.cs" />
+    <Compile Remove="Migrations\20210826075058_watteco.cs" />
+    <Compile Remove="Migrations\20210826075058_watteco.Designer.cs" />
+    <Compile Remove="Migrations\20210826075942_wattecoPulse.cs" />
+    <Compile Remove="Migrations\20210826075942_wattecoPulse.Designer.cs" />
+    <Compile Remove="Migrations\20210826080025_wattecoPulse.cs" />
+    <Compile Remove="Migrations\20210826080025_wattecoPulse.Designer.cs" />
+    <Compile Remove="Migrations\20210826080440_wattecoPulse.cs" />
+    <Compile Remove="Migrations\20210826080440_wattecoPulse.Designer.cs" />
+    <Compile Remove="Migrations\20210826080921_wattecoPulse.cs" />
+    <Compile Remove="Migrations\20210826080921_wattecoPulse.Designer.cs" />
+    <Compile Remove="Migrations\20210826081434_wattecoPulse.cs" />
+    <Compile Remove="Migrations\20210826081434_wattecoPulse.Designer.cs" />
+    <Compile Remove="Migrations\20210826081757_wattecoPulse.cs" />
+    <Compile Remove="Migrations\20210826081757_wattecoPulse.Designer.cs" />
+    <Compile Remove="Migrations\20210826081846_wattecoPulse.cs" />
+    <Compile Remove="Migrations\20210826081846_wattecoPulse.Designer.cs" />
+    <Compile Remove="Migrations\20210901085512_Axioma.cs" />
+    <Compile Remove="Migrations\20210901085512_Axioma.Designer.cs" />
+    <Compile Remove="Migrations\20210929131330_movee.cs" />
+    <Compile Remove="Migrations\20210929131330_movee.Designer.cs" />
+    <Compile Remove="Migrations\20210929131538_movee_test.cs" />
+    <Compile Remove="Migrations\20210929131538_movee_test.Designer.cs" />
+    <Compile Remove="Migrations\20210929131839_movee.cs" />
+    <Compile Remove="Migrations\20210929131839_movee.Designer.cs" />
+    <Compile Remove="Migrations\20211001093954_Movee.cs" />
+    <Compile Remove="Migrations\20211001093954_Movee.Designer.cs" />
+    <Compile Remove="Migrations\20211001094550_movee.cs" />
+    <Compile Remove="Migrations\20211001094550_movee.Designer.cs" />
+    <Compile Remove="Migrations\20211011084202_device.cs" />
+    <Compile Remove="Migrations\20211011084202_device.Designer.cs" />
+    <Compile Remove="Migrations\20211015092427_deviceAndMovee.cs" />
+    <Compile Remove="Migrations\20211015092427_deviceAndMovee.Designer.cs" />
+    <Compile Remove="Migrations\20211015113511_moveeAndDevice.cs" />
+    <Compile Remove="Migrations\20211015113511_moveeAndDevice.Designer.cs" />
+    <Compile Remove="Migrations\20211015122027_moveeAndDevice.cs" />
+    <Compile Remove="Migrations\20211015122027_moveeAndDevice.Designer.cs" />
+    <Compile Remove="Migrations\20211022101714_lobaro.cs" />
+    <Compile Remove="Migrations\20211022101714_lobaro.Designer.cs" />
+    <Compile Remove="Migrations\20211022102536_lobaro.cs" />
+    <Compile Remove="Migrations\20211022102536_lobaro.Designer.cs" />
+    <Compile Remove="Migrations\20211206102552_DeviceType.cs" />
+    <Compile Remove="Migrations\20211206102552_DeviceType.Designer.cs" />
+    <Compile Remove="Migrations\20211210094949_Identity.cs" />
+    <Compile Remove="Migrations\20211210094949_Identity.Designer.cs" />
+    <Compile Remove="Migrations\20211217135444_mailList.cs" />
+    <Compile Remove="Migrations\20211217135444_mailList.Designer.cs" />
+    <Compile Remove="Migrations\20220113121231_moviee-event.cs" />
+    <Compile Remove="Migrations\20220113121231_moviee-event.Designer.cs" />
+    <Compile Remove="Migrations\20220113141708_MoveeEvent.cs" />
+    <Compile Remove="Migrations\20220113141708_MoveeEvent.Designer.cs" />
+    <Compile Remove="Migrations\20220317083137_AckBy.cs" />
+    <Compile Remove="Migrations\20220317083137_AckBy.Designer.cs" />
+    <Compile Remove="Migrations\20220317095634_AckBy.cs" />
+    <Compile Remove="Migrations\20220317095634_AckBy.Designer.cs" />
+    <Compile Remove="Migrations\20220317104959_AckBy.cs" />
+    <Compile Remove="Migrations\20220317104959_AckBy.Designer.cs" />
+    <Compile Remove="Migrations\20220511134347_Added_Location.cs" />
+    <Compile Remove="Migrations\20220511134347_Added_Location.Designer.cs" />
+    <Compile Remove="Migrations\20220519085412_AddedLocation.cs" />
+    <Compile Remove="Migrations\20220519085412_AddedLocation.Designer.cs" />
+    <Compile Remove="Migrations\20220530153520__UpdatedMoveeEventFrame.cs" />
+    <Compile Remove="Migrations\20220530153520__UpdatedMoveeEventFrame.Designer.cs" />
+    <Compile Remove="Migrations\20220530163757__UpdatedMoveeEvent_addedCompanyId.cs" />
+    <Compile Remove="Migrations\20220530163757__UpdatedMoveeEvent_addedCompanyId.Designer.cs" />
+    <Compile Remove="Migrations\20220530164622__UpdatedMoveeEvent_addedCompanyId.cs" />
+    <Compile Remove="Migrations\20220530164622__UpdatedMoveeEvent_addedCompanyId.Designer.cs" />
+    <Compile Remove="Migrations\20220530170932__UpdatedMoveeEvent_addedCompanyId2.cs" />
+    <Compile Remove="Migrations\20220530170932__UpdatedMoveeEvent_addedCompanyId2.Designer.cs" />
+    <Compile Remove="Migrations\20220530171246__UpdatedMoveeEvent_addedCompanyId3.cs" />
+    <Compile Remove="Migrations\20220530171246__UpdatedMoveeEvent_addedCompanyId3.Designer.cs" />
+    <Compile Remove="Migrations\20220530171721__UpdatedMoveeEvent.cs" />
+    <Compile Remove="Migrations\20220530171721__UpdatedMoveeEvent.Designer.cs" />
+    <Compile Remove="Migrations\20220530172008__UpdatedMoveeEvent2.cs" />
+    <Compile Remove="Migrations\20220530172008__UpdatedMoveeEvent2.Designer.cs" />
+    <Compile Remove="Migrations\20220530172248__UpdatedMoveeEvent1.cs" />
+    <Compile Remove="Migrations\20220530172248__UpdatedMoveeEvent1.Designer.cs" />
+    <Compile Remove="Migrations\20220530173246__UpdatedMoveeEvent_test.cs" />
+    <Compile Remove="Migrations\20220530173246__UpdatedMoveeEvent_test.Designer.cs" />
+    <Compile Remove="Migrations\20220530174317__UpdatedMoveeEvent.cs" />
+    <Compile Remove="Migrations\20220530174317__UpdatedMoveeEvent.Designer.cs" />
+    <Compile Remove="Migrations\20220530174459__UpdatedMoveeEvent.cs" />
+    <Compile Remove="Migrations\20220530174459__UpdatedMoveeEvent.Designer.cs" />
+    <Compile Remove="Migrations\20220607090556_MovieEventFrameTest.cs" />
+    <Compile Remove="Migrations\20220607090556_MovieEventFrameTest.Designer.cs" />
+    <Compile Remove="Migrations\20220607091906_AddedMoveeEventFrame.cs" />
+    <Compile Remove="Migrations\20220607091906_AddedMoveeEventFrame.Designer.cs" />
+    <Compile Remove="Migrations\20220607092310_AddedMoveeEventFrame.cs" />
+    <Compile Remove="Migrations\20220607092310_AddedMoveeEventFrame.Designer.cs" />
+    <Compile Remove="Migrations\20220607094637_AddedMoveeEventFrame.cs" />
+    <Compile Remove="Migrations\20220607094637_AddedMoveeEventFrame.Designer.cs" />
+    <Compile Remove="Migrations\20220607095212_AddedTest.cs" />
+    <Compile Remove="Migrations\20220607095212_AddedTest.Designer.cs" />
+    <Compile Remove="Migrations\20220607095319_AddedEvent.cs" />
+    <Compile Remove="Migrations\20220607095319_AddedEvent.Designer.cs" />
+    <Compile Remove="Migrations\20220607095459_AddedEvent2.cs" />
+    <Compile Remove="Migrations\20220607095459_AddedEvent2.Designer.cs" />
+    <Compile Remove="Migrations\20220607095743_AddedEvent3.cs" />
+    <Compile Remove="Migrations\20220607095743_AddedEvent3.Designer.cs" />
+    <Compile Remove="Migrations\20220607100831_AddedMoveeEvent.cs" />
+    <Compile Remove="Migrations\20220607100831_AddedMoveeEvent.Designer.cs" />
+    <Compile Remove="Migrations\20220607104800_Test.cs" />
+    <Compile Remove="Migrations\20220607104800_Test.Designer.cs" />
+    <Compile Remove="Migrations\20220607105710_AddedMoveeEventReference.cs" />
+    <Compile Remove="Migrations\20220607105710_AddedMoveeEventReference.Designer.cs" />
+    <Compile Remove="Migrations\20220607112656_AddedMoveeEventReference.cs" />
+    <Compile Remove="Migrations\20220607112656_AddedMoveeEventReference.Designer.cs" />
+    <Compile Remove="Migrations\20220607115010_AddedMoveeEventReferenceTest.cs" />
+    <Compile Remove="Migrations\20220607115010_AddedMoveeEventReferenceTest.Designer.cs" />
+    <Compile Remove="Migrations\20220607141259_test.cs" />
+    <Compile Remove="Migrations\20220607141259_test.Designer.cs" />
+    <Compile Remove="Migrations\20220607143354_AddedDummyEvent.cs" />
+    <Compile Remove="Migrations\20220607143354_AddedDummyEvent.Designer.cs" />
+    <Compile Remove="Migrations\20220608073158_AddedDummyEventAndUpdatedMoveeEventFrame.cs" />
+    <Compile Remove="Migrations\20220608073158_AddedDummyEventAndUpdatedMoveeEventFrame.Designer.cs" />
+    <Compile Remove="Migrations\20220608073941_AddedDummyEventAndUpdatedMoveeEventFrame.cs" />
+    <Compile Remove="Migrations\20220608073941_AddedDummyEventAndUpdatedMoveeEventFrame.Designer.cs" />
+    <Compile Remove="Migrations\20220608074845_AddedDummyEventAndUpdatedMoveeEventFrame.cs" />
+    <Compile Remove="Migrations\20220608074845_AddedDummyEventAndUpdatedMoveeEventFrame.Designer.cs" />
+    <Compile Remove="Migrations\20220613082709_test.cs" />
+    <Compile Remove="Migrations\20220613082709_test.Designer.cs" />
+    <Compile Remove="Migrations\20220613130053_AddedGuid.cs" />
+    <Compile Remove="Migrations\20220613130053_AddedGuid.Designer.cs" />
+    <Compile Remove="Migrations\20220614135312_AddedGuid2.cs" />
+    <Compile Remove="Migrations\20220614135312_AddedGuid2.Designer.cs" />
+    <Compile Remove="Migrations\20220623162517_test1.cs" />
+    <Compile Remove="Migrations\20220623162517_test1.Designer.cs" />
+    <Compile Remove="Migrations\20220627100704_AddedLocationIdOnEvent.cs" />
+    <Compile Remove="Migrations\20220627100704_AddedLocationIdOnEvent.Designer.cs" />
+    <Compile Remove="Migrations\20220627103216_AddedLocationToEvent.cs" />
+    <Compile Remove="Migrations\20220627103216_AddedLocationToEvent.Designer.cs" />
+    <Compile Remove="Migrations\20220627134822_AddedTag_MoveeEventTag.cs" />
+    <Compile Remove="Migrations\20220627134822_AddedTag_MoveeEventTag.Designer.cs" />
+    <Compile Remove="Migrations\20220715094057_AddedCommentModel.cs" />
+    <Compile Remove="Migrations\20220715094057_AddedCommentModel.Designer.cs" />
+    <Compile Remove="Migrations\20220715112231_MoveeEventPropsChanged.cs" />
+    <Compile Remove="Migrations\20220715112231_MoveeEventPropsChanged.Designer.cs" />
+    <Compile Remove="Migrations\20220715115554_MoveeEventPropsChanged2.cs" />
+    <Compile Remove="Migrations\20220715115554_MoveeEventPropsChanged2.Designer.cs" />
+    <Compile Remove="Migrations\20220718070855_test1.cs" />
+    <Compile Remove="Migrations\20220718070855_test1.Designer.cs" />
+    <Compile Remove="Migrations\20220725125239_addedRequiredOnEventDescription.cs" />
+    <Compile Remove="Migrations\20220725125239_addedRequiredOnEventDescription.Designer.cs" />
+    <Compile Remove="Migrations\20220725140710_AddedBoolPropToTagAndComment.cs" />
+    <Compile Remove="Migrations\20220725140710_AddedBoolPropToTagAndComment.Designer.cs" />
+    <Compile Remove="Migrations\20220808114116_UpdatedMoveeEvent.cs" />
+    <Compile Remove="Migrations\20220808114116_UpdatedMoveeEvent.Designer.cs" />
+    <Compile Remove="Migrations\20220823091531_AddedIsAckedAdnIsCleared.cs" />
+    <Compile Remove="Migrations\20220823091531_AddedIsAckedAdnIsCleared.Designer.cs" />
+    <Compile Remove="Migrations\20220823105306_AddedIsAckedAndIsCleared.cs" />
+    <Compile Remove="Migrations\20220823105306_AddedIsAckedAndIsCleared.Designer.cs" />
+    <Compile Remove="Migrations\20220823105603_AddedIsAckedCleared.cs" />
+    <Compile Remove="Migrations\20220823105603_AddedIsAckedCleared.Designer.cs" />
+    <Compile Remove="Migrations\20220824121950_RemovedRequiredAckAndClearMessage.cs" />
+    <Compile Remove="Migrations\20220824121950_RemovedRequiredAckAndClearMessage.Designer.cs" />
+    <Compile Remove="Migrations\20220905135151_AddedByTimeActionActiveToMoveeEventTag.cs" />
+    <Compile Remove="Migrations\20220905135151_AddedByTimeActionActiveToMoveeEventTag.Designer.cs" />
+    <Compile Remove="Migrations\20220907111629_AddedEventTagLog.cs" />
+    <Compile Remove="Migrations\20220907111629_AddedEventTagLog.Designer.cs" />
+    <Compile Remove="Migrations\20220907113225_AddedEventTagLog.cs" />
+    <Compile Remove="Migrations\20220907113225_AddedEventTagLog.Designer.cs" />
+    <Compile Remove="Migrations\20220907143544_AddedEventIdToTagLog.cs" />
+    <Compile Remove="Migrations\20220907143544_AddedEventIdToTagLog.Designer.cs" />
+    <Compile Remove="Migrations\20220909115616_UpdatedLocation.cs" />
+    <Compile Remove="Migrations\20220909115616_UpdatedLocation.Designer.cs" />
+    <Compile Remove="Migrations\20220912103506_AddedCompanyIdToLocation.cs" />
+    <Compile Remove="Migrations\20220912103506_AddedCompanyIdToLocation.Designer.cs" />
+    <Compile Remove="Migrations\20220912103951_AddedCompanyIdToLocation.cs" />
+    <Compile Remove="Migrations\20220912103951_AddedCompanyIdToLocation.Designer.cs" />
+    <Compile Remove="Migrations\20220912104609_AddedCompanyIdToLocation.cs" />
+    <Compile Remove="Migrations\20220912104609_AddedCompanyIdToLocation.Designer.cs" />
+    <Compile Remove="Migrations\20220912122339_test.cs" />
+    <Compile Remove="Migrations\20220912122339_test.Designer.cs" />
+    <Compile Remove="Migrations\20220912123723_Test.cs" />
+    <Compile Remove="Migrations\20220912123723_Test.Designer.cs" />
+    <Compile Remove="Migrations\20220912123843_Test2.cs" />
+    <Compile Remove="Migrations\20220912123843_Test2.Designer.cs" />
+    <Compile Remove="Migrations\20220913063757_AddedRelationLocationCompany.cs" />
+    <Compile Remove="Migrations\20220913063757_AddedRelationLocationCompany.Designer.cs" />
+    <Compile Remove="Migrations\20220913075545_Test2.cs" />
+    <Compile Remove="Migrations\20220913075545_Test2.Designer.cs" />
+    <Compile Remove="Migrations\20221114141433_AddedCompanyIdToTagModel.cs" />
+    <Compile Remove="Migrations\20221114141433_AddedCompanyIdToTagModel.Designer.cs" />
+    <Compile Remove="Migrations\20221114141701_AddedCompanyIdToTagModel.cs" />
+    <Compile Remove="Migrations\20221114141701_AddedCompanyIdToTagModel.Designer.cs" />
+    <Compile Remove="Migrations\20221114151422_ChangedTagModelForInclude.cs" />
+    <Compile Remove="Migrations\20221114151422_ChangedTagModelForInclude.Designer.cs" />
+    <Compile Remove="Migrations\20221115080121_RemovedIndex.cs" />
+    <Compile Remove="Migrations\20221115080121_RemovedIndex.Designer.cs" />
+    <Compile Remove="Migrations\20221115081451_New.cs" />
+    <Compile Remove="Migrations\20221115081451_New.Designer.cs" />
+    <Compile Remove="Migrations\20221125081825_Test2.cs" />
+    <Compile Remove="Migrations\20221125081825_Test2.Designer.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Remove="Views\Device\DeviceIndexPartial.cshtml" />
+    <Content Remove="Views\Location\AccessDenied.cshtml" />
+    <Content Remove="Views\Location\NotFound.cshtml" />
+    <Content Remove="Views\MV\AccessDenied.cshtml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Controllers\GWController.cs" />
+    <None Include="Views\Account\AccessDenied.cshtml" />
+    <None Include="Views\Account\AccountLocked.cshtml" />
+    <None Include="Views\Account\ChangePassword.cshtml" />
+    <None Include="Views\Account\ChangePasswordConfirmation.cshtml" />
+    <None Include="Views\Account\ConfirmEmail.cshtml" />
+    <None Include="Views\Account\ForgotPassword.cshtml" />
+    <None Include="Views\Account\ForgotPasswordConfirmation.cshtml" />
+    <None Include="Views\Account\Login_old.cshtml" />
+    <None Include="Views\Account\Register.cshtml" />
+    <None Include="Views\Account\ResetPassword.cshtml" />
+    <None Include="Views\Account\ResetPasswordConfirmation.cshtml" />
+    <None Include="Views\Administration\AccessDenied.cshtml" />
+    <None Include="Views\Administration\CompanyDetails.cshtml" />
+    <None Include="Views\Administration\CompanyEdit.cshtml" />
+    <None Include="Views\Administration\CreateCompany.cshtml" />
+    <None Include="Views\Administration\CreateRole.cshtml" />
+    <None Include="Views\Administration\EditRole.cshtml" />
+    <None Include="Views\Administration\EditUser.cshtml" />
+    <None Include="Views\Administration\EditUsersInRole.cshtml" />
+    <None Include="Views\Administration\ListCompanies.cshtml" />
+    <None Include="Views\Administration\ListRoles.cshtml" />
+    <None Include="Views\Administration\ListUsers.cshtml" />
+    <None Include="Views\Administration\ManageUserClaims.cshtml" />
+    <None Include="Views\Administration\ManageUserRoles.cshtml" />
+    <None Include="Views\Administration\Profile.cshtml" />
+    <None Include="Views\Administration\UserDetails.cshtml" />
+    <None Include="Views\DeviceType\Create.cshtml" />
+    <None Include="Views\DeviceType\Details.cshtml" />
+    <None Include="Views\DeviceType\Edit.cshtml" />
+    <None Include="Views\DeviceType\Index.cshtml" />
+    <None Include="Views\Device\Create.cshtml" />
+    <None Include="Views\Device\Details.cshtml" />
+    <None Include="Views\Device\DeviceNotFound.cshtml" />
+    <None Include="Views\Device\Edit.cshtml" />
+    <None Include="Views\Device\DeviceIndexPartial.cshtml" />
+    <None Include="Views\Device\Index.cshtml" />
+    <None Include="Views\Location\NotFound.cshtml" />
+    <None Include="Views\Location\AccessDenied.cshtml" />
+    <None Include="Views\MV\AccessDenied.cshtml" />
+    <None Include="wwwroot\js\chart\deps\canvg.js" />
+    <None Include="wwwroot\js\chart\deps\canvg.js.map" />
+    <None Include="wwwroot\js\chart\deps\pdfmake.js" />
+    <None Include="wwwroot\js\chart\deps\pdfmake.js.map" />
+    <None Include="wwwroot\js\chart\deps\xlsx.js" />
+    <None Include="wwwroot\js\chart\deps\xlsx.js.map" />
+    <None Include="wwwroot\js\chart\plugins\annotation.js" />
+    <None Include="wwwroot\js\chart\plugins\annotation.js.map" />
+    <None Include="wwwroot\js\chart\plugins\bullets.js" />
+    <None Include="wwwroot\js\chart\plugins\bullets.js.map" />
+    <None Include="wwwroot\js\chart\plugins\forceDirected.js" />
+    <None Include="wwwroot\js\chart\plugins\forceDirected.js.map" />
+    <None Include="wwwroot\js\chart\plugins\overlapBuster.js" />
+    <None Include="wwwroot\js\chart\plugins\overlapBuster.js.map" />
+    <None Include="wwwroot\js\chart\plugins\rangeSelector.js" />
+    <None Include="wwwroot\js\chart\plugins\rangeSelector.js.map" />
+    <None Include="wwwroot\js\chart\plugins\regression.js" />
+    <None Include="wwwroot\js\chart\plugins\regression.js.map" />
+    <None Include="wwwroot\js\chart\plugins\sliceGrouper.js" />
+    <None Include="wwwroot\js\chart\plugins\sliceGrouper.js.map" />
+    <None Include="wwwroot\js\chart\plugins\sunburst.js" />
+    <None Include="wwwroot\js\chart\plugins\sunburst.js.map" />
+    <None Include="wwwroot\js\chart\plugins\timeline.js" />
+    <None Include="wwwroot\js\chart\plugins\timeline.js.map" />
+    <None Include="wwwroot\js\chart\plugins\venn.js" />
+    <None Include="wwwroot\js\chart\plugins\venn.js.map" />
+    <None Include="wwwroot\js\chart\plugins\wordCloud.js" />
+    <None Include="wwwroot\js\chart\plugins\wordCloud.js.map" />
+    <None Include="wwwroot\webfonts\fa-brands-400.svg" />
+    <None Include="wwwroot\webfonts\fa-brands-400.woff2" />
+    <None Include="wwwroot\webfonts\fa-regular-400.svg" />
+    <None Include="wwwroot\webfonts\fa-regular-400.woff2" />
+    <None Include="wwwroot\webfonts\fa-solid-900.svg" />
+    <None Include="wwwroot\webfonts\fa-solid-900.woff2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="jQuery.UI.Combined" Version="1.13.2" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.7" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Common" Version="8.0.7" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.7">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.7" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.7">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.0" />
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.3" />
+    <PackageReference Include="MySql.Data" Version="9.0.0" />
+    <PackageReference Include="MySqlConnector" Version="2.3.7" />
+    <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.2" />
+    <PackageReference Include="System.Text.Json" Version="8.0.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="nlog.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Data\" />
+    <Folder Include="Migrations\" />
+  </ItemGroup>
+
+</Project>

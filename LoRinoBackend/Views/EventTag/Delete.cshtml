@@ -1,0 +1,20 @@
+﻿@model MoveeEventTag
+@{
+    ViewData["Title"] = "Delete";
+}
+
+<h2>Jeste li sigurni?</h2>
+
+<p>
+    @Model.TagName
+</p>
+
+
+<form asp-action="DeleteLocationUser">
+    <input type="hidden" name="id" value="@Model.Id" />
+    <input type="submit" value="Delete" class="btn btn-default" />
+</form>
+<a asp-action="Index" asp-route-id="@Model.MoveeEventFrameId">Natrag na popis</a>
+@section Scripts {
+    <script src="~/js/CustomScript.js"></script>
+}

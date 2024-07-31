@@ -1,0 +1,60 @@
+﻿@model IEnumerable<LoRinoBackend.Models.MoveeTag>
+@inject IMoveeEventTagRepository tagRepo
+@{
+    ViewData["Title"] = "Index";
+
+
+}
+
+<p>
+    <a class="btn btn-default" asp-action="Create">Napravi novi tag</a>
+</p>
+<br />
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Name)
+            </th>
+            @if (User.IsInRole("Super Admin"))
+                                                    {
+            <th>
+                @Html.DisplayNameFor(model => model.Active)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.CompanyId)
+            </th>
+                                                    }
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Name)
+            </td>
+                @if (User.IsInRole("Super Admin"))
+                {
+            <td>
+                @Html.DisplayFor(modelItem => item.Active)
+            </td>
+            <td>
+                @tagRepo.GetCompanyNameFromTagId(item.CompanyId)
+            </td>
+                }
+            <td>
+                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-default">Obriši</a>
+                    @if (User.IsInRole("Super Admin")){
+                        <a asp-controller="MoveeTag" asp-action="Edit" asp-route-id="@item.Id" class="btn btn-default">Uredi</a>
+                    
+                        
+                    }
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
+@section Scripts {
+    <script src="~/js/CustomScript.js"></script>
+}

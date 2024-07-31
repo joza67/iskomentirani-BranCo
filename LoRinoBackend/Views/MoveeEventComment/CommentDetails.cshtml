@@ -1,0 +1,55 @@
+﻿@using LoRinoBackend.Functions;
+@model LoRinoBackend.Models.MoveeEventComment
+@inject UserManager<ApplicationUser> userManager
+
+@{
+    ViewData["Title"] = "CommentDetails";
+}
+@functions{
+
+    public string findUser(string id)
+    {
+        var userName = "";
+        ApplicationUser user = userManager.Users.FirstOrDefault(e => e.Id == id);
+        if (user != null)
+        {
+            userName = user.FirstName + " " + user.LastName;
+        }
+        return userName;
+    }
+}
+
+<div>
+    <hr />
+    <dl class="row">
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.Comment)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.Comment)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.EventCommentTime)
+        </dt>
+        <dd class = "col-sm-10">
+            @Unix.ToDateTime(Model.EventCommentTime)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.EventCommentBy)
+        </dt>
+        <dd class = "col-sm-10">
+            @findUser(Model.EventCommentBy)
+        </dd>
+    </dl>
+</div>
+<div>
+   <a asp-action="CommentEdit" asp-route-id="@Model.Id">Uredi</a> |
+    <a asp-action="Index" asp-route-eventId="@Model.MoveeEventFrameId">Popis komentara</a> |
+</div>
+
+<br />
+
+<a class="btn btn-default" style="width:auto"asp-controller="MV" asp-action="AckMoveeEvent" asp-route-id="@Model.MoveeEventFrameId">Nastavi sa potvrdom</a>
+@section Scripts {
+    <script src="~/js/CustomScript.js"></script>
+}

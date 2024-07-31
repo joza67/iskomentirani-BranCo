@@ -1,0 +1,42 @@
+﻿@model IEnumerable<LocationUser>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<p>
+    <a asp-action="Create" asp-route-locationId="@ViewBag.LocationId" class="btn btn-sm btn-secondary">Dodjeli korisnika</a>
+</p>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>Location Name</th>
+            <th>User Name</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Id</td>
+                <td>@item.LocationName</td>
+                <td>@item.UserName</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.Id" asp-route-locationId="@ViewBag.LocationId">Uredi</a> |
+                    <a asp-action="Delete" asp-route-id="@item.Id" asp-route-locationId="@ViewBag.LocationId">Obriši</a>
+                    
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<p>
+    <a asp-action="ListLocations" asp-controller="Location" class="btn btn-sm btn-secondary">Natrag na lokacije</a>
+</p>
+@section Scripts {
+    <script src="~/js/CustomScript.js"></script>
+}

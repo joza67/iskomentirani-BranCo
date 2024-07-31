@@ -1,0 +1,149 @@
+﻿@model IEnumerable<LoRinoBackend.Models.MoveeEventFrame>
+@using LoRinoBackend.Functions;
+@using Microsoft.EntityFrameworkCore;
+@using Microsoft.AspNetCore.Identity
+
+@inject UserManager<ApplicationUser> userManager
+@inject ILocationRepository locations
+
+@{
+    ViewData["Title"] = "EventsIndex";
+    var rowState = "0";
+
+}
+@{
+    ViewBag.Title = "BranCo";
+}
+
+@functions {
+
+    public string findUser(string id)
+    {
+        var userName = "";
+        ApplicationUser user = userManager.Users.Include(x => x.Company).FirstOrDefault(e => e.Id == id);
+        if (user != null)
+        {
+            userName = user.FirstName + " " + user.LastName;
+        }
+        return userName;
+
+    }
+}
+
+<table class="table" id="eventTable">
+    <thead>
+        <tr>
+            <th class="col-1">
+                Status
+            </th>
+            <th class="col-1">
+                @Html.DisplayNameFor(model => model.Id)
+            </th>
+            <th class="col-1">
+                @Html.DisplayNameFor(model => model.EventCreationTime)
+            </th>
+            <th class="col-1">
+                @Html.DisplayNameFor(model => model.EventAckBy)
+            </th>
+            <th class="col-1">
+                @Html.DisplayNameFor(model => model.EventAckTime)
+            </th>
+            <th class="col-1">
+                @Html.DisplayNameFor(model => model.EventClearBy)
+            </th>
+            <th class="col-1">
+                @Html.DisplayNameFor(model => model.EventClearTime)
+            </th>
+            <th class="col-1">
+                @Html.DisplayNameFor(model => model.AlarmCount)
+            </th>
+            <th class="col-1">
+                @Html.DisplayNameFor(model => model.LocationId)
+            </th>
+            <th class="col-1"></th>
+        </tr>
+    </thead>
+    <tbody>
+
+
+
+
+        @foreach (var item in Model.OrderByDescending(i => i.Id).Where(i => i.LocationId != 0))
+        {
+            if (item.IsAcked == true && item.IsCleared == true)
+            {
+                rowState = "State0";
+            }
+            else if (item.IsAcked == false && item.IsCleared == false)
+            {
+                rowState = "State1";
+            }
+            else if (item.IsAcked == true && item.IsCleared == false)
+            {
+                rowState = "State2";
+            }
+            <tr>
+                <td><button type="button" class="btn btn-circle btn-xl @rowState.ToString()"></button></td>
+                <td>
+                    @item.Id
+                </td>
+                <td>
+                    @Unix.ToDateTime(item.EventCreationTime)
+                </td>
+                <td>
+                    @findUser(@item.EventAckBy)
+                </td>
+                @if (@item.IsAcked == true)
+                {
+                    <td>
+                        @Unix.ToDateTime(@item.EventAckTime)
+                    </td>
+                }
+                else
+                {
+                    <td></td>
+                }
+
+                <td>
+                    @findUser(@item.EventClearBy)
+                </td>
+                @if (@item.IsCleared == true)
+                {
+                    <td>
+                        @Unix.ToDateTime(@item.EventClearTime)
+                    </td>
+                }
+                else
+                {
+                    <td></td>
+                }
+                <td>
+                    @Html.DisplayFor(modelItem => item.AlarmCount)
+                </td>
+                <td>
+                    @locations.GetLocation(item.LocationId).Name
+                </td>
+                <td>
+                    <a class="btn btn-default" asp-action="EventsDetails" asp-route-guid="@item.Guid">Detalji</a>
+                </td>
+            </tr>
+        }
+        <tr>
+            <td colspan="12" class="text-muted">Stranica @ViewBag.Page / @ViewBag.TotalPageCount</td>
+        </tr>
+        <tr>
+            <td colspan="12">
+                @if (ViewBag.Page > 1)
+                {
+                    <a asp-action="EventsIndex" asp-route-filter="@ViewBag.Filter" asp-route-perPage="@ViewBag.PerPage" asp-route-page="@(ViewBag.Page - 1)">Prethodna stranica</a>
+                    <span> | </span>
+                }
+                @if (ViewBag.Page < ViewBag.TotalPageCount)
+                {
+                    <a asp-action="EventsIndex" asp-route-filter="@ViewBag.Filter" asp-route-perPage="@ViewBag.PerPage" asp-route-page="@(ViewBag.Page + 1)">Slijedeća stranica</a>
+                }
+            </td>
+        </tr>
+
+    </tbody>
+</table>

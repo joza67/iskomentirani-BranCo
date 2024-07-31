@@ -1,0 +1,51 @@
+﻿@using LoRinoBackend.Functions;
+@model IEnumerable<MoveeDataFrameViewModel>
+
+@{ ViewBag.Title = "Branco"; }
+
+<div class="container-fluid">
+    <div class="row mb-5">
+
+    </div>
+    <table class="table">
+        <tr>
+            <th scope="col">R.Br.</th>
+            <th scope="col">ID uređaja</th>
+            <th scope="col">Naziv</th>
+            <th scope="col">Geo. dužina</th>
+            <th scope="col">Geo. širina</th>
+            @if (User.IsInRole("Super Admin")) {
+                <th scope="col">Baterija</th>
+                <th scope="col">Zadnja poruka</th>  
+            }
+            <th scope="col">Broj alarma</th>
+        </tr>
+        @{ int num = 0;}
+        @foreach (var device in Model.OrderBy(d => d.moveeDataFrame.Device.Name))
+        {
+            num++;
+    <tr>
+        <td scope="col">@num</td>
+        <td scope="col"><a asp-controller="MV" asp-action="Details" asp-route-id="@device.moveeDataFrame.Device.DevEui" class="btn btn-link m-1">@device.moveeDataFrame.Device.DevEui</a></td>
+        <td scope="col"><h5>@device.moveeDataFrame.Device.Name</h5></td>
+        <td scope="col">@Math.Round(device.moveeDataFrame.Device.Lat, 6)</td>
+        <td scope="col">@Math.Round(device.moveeDataFrame.Device.Long, 6)</td>
+        @if (User.IsInRole("Super Admin")) {
+            <td scope="col">@Math.Round(device.moveeDataFrame.Battery, 2) V</td>
+            <td scope="col">@Unix.ToDateTime(device.moveeDataFrame.RecvTime)</td>
+        }
+        <td scope="col">@device.cntAlarm</td>
+    </tr>}
+
+
+    </table>
+</div>
+@section Scripts {
+    <script src="~/js/CustomScript.js"></script>
+    <style>
+        .table tbody > tr > td {
+            vertical-align: middle;
+        }
+    </style>
+
+}

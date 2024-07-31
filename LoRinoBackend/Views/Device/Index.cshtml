@@ -1,0 +1,386 @@
+﻿@model IEnumerable<Device>
+
+@{
+    ViewBag.Title = "Devices";
+}
+
+@section Styles {
+
+    <link rel="stylesheet" href="~/css/spinner.css" />
+
+    <style type="text/css">
+        .State0 {
+            background-color: green;
+        }
+
+        .State1 {
+            background-color: #b7113c;
+            color: white;
+        }
+
+        .State2 {
+            background-color: #FFA500;
+            color: white;
+        }
+
+        .btn-circle.btn-xl {
+            width: 20px;
+            height: 20px;
+            padding: 13px 13px;
+            border-radius: 120px;
+            font-size: 15px;
+            text-align: center;
+        }
+
+        .dropdown-toggle {
+            position: center;
+            top: 0;
+            left: 0;
+            padding-top: 0;
+            padding-right: 0;
+            padding-bottom: 0;
+            padding-left: 0;
+            height: 100%;
+            width: 100%;
+            text-align: center;
+        }
+
+        .bootstrap-select {
+            width: 220px;
+            height: 38px;
+        }
+
+        .active-element {
+            cursor: pointer;
+            color: blue !important;
+        }
+
+            .active-element:hover {
+                /* Change color on hover */
+                color: orange !important;
+            }
+
+    </style>
+}
+
+@if (Model.Any())
+{
+
+    @* <div class="row">
+
+        <div class="col-10 d-flex justify-content-start">
+            <div class="row m-2">
+                <div asp-controller="MV" asp-action="EventsIndex" method="get" class="form-inline">
+                    <div class="form-group mb-2">
+                        <!-- Dodajemo form-group i mb-2 za okvir i razmak -->
+                        <select id="lokacija" name="Lokacija" title="Lokacija" asp-items="@ViewBag.Lokacija" multiple data-live-search="true"></select> <!-- Dodajemo form-control za stiliranje select elementa -->
+                    </div>
+                    <input onclick="Pretraga()" id="tagId" type="submit" value="Pretraži" class="btn btn-default mb-2" style="margin-left: 10px;" /> <!-- Dodajemo mb-2 za razmak -->
+                </div>
+
+                <div class="form-inline">
+                    <div class="form-group mb-2">
+                        <!-- Dodajemo form-group i mb-2 za okvir i razmak -->
+                        <span class="m-2">Pretraga događaja: </span><input id="filter" type="text" name="filter" class="form-control" /> <!-- Dodajemo form-control za stiliranje input elementa -->
+                    </div>
+                    <input onclick="Pretraga()" type="submit" value="Pretraži" class="btn btn-default mb-2" /> <!-- Dodajemo mb-2 za razmak -->
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-3 form-inline">
+            <a class="nav-link status-link active-element" id="active">Aktivni</a>
+            <a class="nav-link status-link active-element" id="acked">Potvrđeni</a>
+            <a class="nav-link status-link active-element" id="cleared">Zatvoreni</a>
+            <a class="nav-link status-link active-element" id="all">Svi</a>
+        </div>
+
+    </div> *@
+
+
+    <a class="btn btn-default" style="width:auto"
+       asp-controller="Device" asp-action="Devices">
+        Drugi prikaz
+    </a>
+    <table class="table">
+        <thead>
+            <tr>
+                <th class="col-2">
+                    @Html.DisplayNameFor(model => model.Name)
+                </th>
+                <th class="col-2">
+                    @Html.DisplayNameFor(model => model.DevEui)
+                </th>
+                <th class="col-2">
+                    @Html.DisplayNameFor(model => model.Company.Name)
+                </th>
+                <th class="col-2">
+                    @Html.DisplayNameFor(model => model.Location.Name)
+                </th>
+
+                <th class="col-2"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@Html.DisplayFor(modelItem => item.Name)</td>
+                    <td>@Html.DisplayFor(modelItem => item.DevEui)</td>
+                    <td>@Html.DisplayFor(modelItem => item.Company.Name)</td>
+
+                    @if (User.IsInRole("Super Admin"))
+                    {
+                        <td>@Html.DisplayFor(modelItem => item.Location.Name)</td>
+                    }
+                    <td>
+                        <div class="text-center">
+                            <a asp-controller="Device" asp-action="Details" asp-route-id="@item.Id" class="btn btn-default m-1">Detalji</a>
+                            <a asp-controller="Device" asp-action="Edit" asp-route-id="@item.Id" class="btn btn-default m-1">Uredi</a>
+                        </div>
+                    </td>
+                </tr>
+
+            }
+        </tbody>
+    </table>
+
+
+
+}
+else
+{
+    <div class="row">
+        <div class="card">
+            <div class="card-header">
+                Još nije dodan niti jedan uređaj.
+            </div>
+            @if (User.IsInRole("Super Admin"))
+            {
+                <div class="card-body">
+                    <h5 class="card-title">
+                        Dodaj novi uređaj pritiskom na gumb
+                    </h5>
+
+                </div>
+            }
+        </div>
+    </div>
+
+}
+
+@section Scripts {
+    <script src="~/js/CustomScript.js"></script>
+
+    <script>
+        function formatTimestamp(UNIX_timestamp, useMonthNames = true) {
+            const a = new Date(UNIX_timestamp);
+            const months = useMonthNames ? [
+                'Siječanj', 'Veljača', 'Ožujak', 'Travanj', 'Svibanj', 'Lipanj',
+                'Srpanj', 'Kolovoz', 'Rujan', 'Listopad', 'Studeni', 'Prosinac'
+            ] : [
+                '1.', '2.', '3.', '4.', '5.', '6.', '7.', '8.', '9.', '10.', '11.', '12.'
+            ];
+
+            const year = a.getFullYear();
+            const month = useMonthNames ? months[a.getMonth()] : months[a.getMonth() - 1];
+            const date = a.getDate();
+            const hour = a.getHours();
+            const min = a.getMinutes().toString().padStart(2, '0');
+            const sec = a.getSeconds().toString().padStart(2, '0');
+
+            return `${date}.${month}${year}. ${hour}:${min}:${sec}`;
+        }
+
+        @*// var jsonTags = @Html.Raw(Json.Serialize(eventsTagsRepo.GetActiveMoveeTags()));*@
+        // console.log(jsonTags);
+
+        var filter = [];
+        var state;
+        let list;
+
+        var tags = [];
+        // const params = new URLSearchParams(window.location.search);
+        // const data = params.getAll('tagId');
+        // const filter = params.getAll('filter');
+        // const state = params.getAll('state');
+
+        function AppendNiceButtons() {
+            if (list == undefined) {
+                let $span = $('<span class="m-2">Kriterij pretrage događaja: </span>');
+                let $div = $('<div id="myTags"></div>');
+                $('.row.m-2').append($span, $div);
+                list = document.getElementById("myTags");
+            }
+            console.log("it should be empty")
+            $('#myTags').empty()
+
+            if (tags != undefined) {
+                tags.forEach((item) => {
+                    let btn = document.createElement("BUTTON");
+                    btn.innerText = item;
+                    btn.className = "btn btn-default";
+                    //btn.classList.add("fa", "fa-tag");
+                    btn.style.margin = "5px";
+                    //btn.setAttribute('style', 'padding: 100px');
+                    list.appendChild(btn);
+                })
+            }
+
+            if (filter.length !== 0) {
+                let btn = document.createElement("BUTTON");
+                btn.innerText = filter;
+                btn.className = "btn btn-info";
+                btn.style.margin = "5px";
+                list.appendChild(btn);
+            }
+
+            if (state !== undefined && state !== "all") {
+                let btn = document.createElement("BUTTON");
+                if (state == "cleared") {
+                    btn.innerText = "Zatvoreni";
+                    btn.className = "btn btn-success";
+                }
+                if (state == "acked") {
+                    btn.innerText = "Potvrđeni";
+                    btn.className = "btn btn-warning";
+                }
+                if (state == "active") {
+                    btn.innerText = "Aktivni";
+                    btn.className = "btn btn-default";
+                }
+
+                list.appendChild(btn);
+            }
+        }
+
+        $('select').selectpicker();
+
+        @* var eventList = @Html.Raw(Json.Serialize(moveeEvents));
+        // var locationJson = @Html.Raw(Json.Serialize(locationList));
+        // var json = @Html.Raw(Json.Serialize(allMsgs));*@
+
+        var allDevices = [];
+
+        function arrayRemove(arr, value) {
+
+            return arr.filter(function (ele) {
+                return ele != value;
+            });
+        }
+
+        var i = 0;
+
+        // var onChange = function (id, eventCreationTime, alarmCount, locationId, guid, moveeEventFrameId) {
+
+        //     console.log(eventCreationTime);
+        //     var locationName = $.grep(locationJson, function (p) { return p.id == locationId; })
+        //         .map(function (p) { return p.name; });
+
+        //     $('#eventTable tbody')
+        //         .prepend('<tr>')
+        //         .children('tr:first')
+        //         .append("<td><input class=\"btn State1 btn-circle btn-xl\ type=\"button\', true)\"></td>")
+        //         .append('<td scope="col">' + moveeEventFrameId + '</td>')
+        //         .append('<td scope="col">' + formatTimestamp(eventCreationTime, false) + '</td>')
+        //         .append('<td></td>')
+        //         .append('<td></td>')
+        //         .append('<td></td>')
+        //         .append('<td></td>')
+        //         .append('<td scope="col">' + alarmCount + '</td>')
+        //         .append('<td scope="col">' + locationName + '</td>')
+        //         .append("<td><input class=\"btn btn-default\" style=\"max-width: 10vw\" type=\"button\" value=\"Detalji\" onclick=\"window.open(\'" + './EventsDetails?guid=' + guid + "\', true)\"></td>")
+        //         ;
+
+        //     playAudio();
+        //     myShowFunction();
+        //     Msg2();
+        // }
+
+        function ReloadPartial(filter, state, page, perPage, tagId) {
+
+            if (filter == undefined) {
+                filter = ""
+            }
+            $.ajax({
+                type: "GET",
+                url: "/Device/DeviceIndexPartial",
+                // data: {
+                //     filter: filter,
+                //     state: state,
+                //     page: page,
+                //     perPage: perPage,
+                //     tagIds: tagId,
+                // },
+                beforeSend: function () {
+                    // Prije slanja se pokazuje ikona za učitavanje
+                    $("body").append("<div class='spinner'></div>");
+                    //<i class='fa fa-spinner fa-spin'></i>
+
+                },
+                success: function (data) {
+                    // Ukoliko zahtjev uspije, vraća se data, koja se zapisuje nakon fade out-a na div Index_Partial
+                    $("#DeviceIndexPartial").fadeOut(200).hide();
+                    //console.log(data);
+                    $("#DeviceIndexPartial").show().html(data).fadeIn(200);
+                },
+                complete: function () {
+                    // Poslije slanja se uklanja ikona za učitavanje
+                    $(".spinner").remove();
+                },
+                failure: function (jqXHR, textStatus, errorThrown) {
+                    alert("HTTP Status: " + jqXHR.status + "; Error Text: " + jqXHR.responseText); // Display error message
+                }
+            });
+        }
+
+        function Pretraga() {
+            let page = "";
+            let perPage = "";
+            let l = [];
+            let tagIds = document.getElementById("tagId");
+            tags = [];
+            for (let i = 0; i < tagIds.length; i++) {
+                if (tagIds[i].selected) {
+                    l.push(tagIds[i].value);
+                    tags.push(tagIds[i].label)
+                }
+            }
+            console.log(l);
+            var tagIdsString = l.join(',');
+            // tagIds = parseInt(document.getElementById("tagId").value);
+            filter = document.getElementById("filter").value;
+            var active = document.getElementsByClassName("text-red-600 status-link")[0];
+            if (active != undefined) {
+                state = active.id;
+            }
+            console.log(state);
+            console.log(filter);
+            console.log(page);
+            console.log(tagIdsString);
+            AppendNiceButtons()
+            ReloadPartial(filter, state, page, perPage, tagIdsString);
+
+            return true;
+        }
+
+        $(document).ready(function () {
+            $(".status-link").click(function () {
+                // Get the id from the data attribute
+                //var id = $(this)[0].id;
+                // Change the color of all links to active-element
+                $(".status-link").removeClass("text-red-600").addClass("active-element");
+
+                // Change the color of the clicked link to red
+                $(this).removeClass("active-element").addClass("text-red-600");
+
+                // Call the Pretraga method with the selected id
+                Pretraga();
+            });
+            ReloadPartial();
+        });
+    </script>
+}

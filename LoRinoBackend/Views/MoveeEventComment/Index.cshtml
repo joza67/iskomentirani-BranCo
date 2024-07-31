@@ -1,0 +1,82 @@
+﻿@using LoRinoBackend.Functions;
+@model IEnumerable<LoRinoBackend.Models.MoveeEventComment>
+@inject UserManager<ApplicationUser> userManager
+@{
+    ViewData["Title"] = "Index";
+}
+@functions{
+
+    public string findUser(string id)
+    {
+        var userName = "";
+        ApplicationUser user = userManager.Users.FirstOrDefault(e => e.Id == id);
+        if (user != null)
+        {
+            userName = user.FirstName + " " + user.LastName;
+        }
+        return userName;
+    }
+}
+
+<br />
+<p>
+    <a class="btn btn-default" asp-action="CreateComment" asp-route-eventId="@ViewBag.EventId">Novi komentar</a>
+</p>
+<br />
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Comment)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.EventCommentTime)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.EventCommentBy)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Comment)
+            </td>
+            <td>
+                @Unix.ToDateTime(item.EventCommentTime)
+            </td>
+            <td>
+                @findUser(item.EventCommentBy)
+            </td>
+            <td>
+            <form method="post" asp-action="CommentDelete" asp-route-id="@item.Id">
+
+                 <div class="btn-group" role="group" aria-label="Basic example">
+
+                     <a class="btn btn-default" asp-action="CommentEdit" asp-route-id="@item.Id">Uredi</a>
+                     <a class="btn btn-default" asp-action="CommentDetails" asp-route-id="@item.Id">Detalji</a>
+                        <span id="confirmDeleteSpan_@item.Id" style="display:none">
+                        <span>Jeste li sigurni?</span>
+                        <button type="submit" class="btn btn-default">Potvrdi</button>
+                        <a href="#" class="btn btn-default" onclick="confirmDelete('@item.Id', false)">Odustani</a>
+                        </span>
+                        <span id="deleteSpan_@item.Id">
+                        <a href="#" class="btn btn-default" onclick="confirmDelete('@item.Id', true)">Obriši</a>
+                        </span>
+                        </div>
+                       </form>
+                </td>
+        </tr>
+        }
+
+
+
+    </tbody>
+</table>
+
+    <a class="btn btn-default" style="width:auto"asp-controller="MV" asp-action="AckMoveeEvent" asp-route-id="@ViewBag.EventId" >Nastavi sa potvrdom</a>
+@section Scripts {
+    <script src="~/js/CustomScript.js"></script>
+}

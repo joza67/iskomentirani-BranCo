@@ -1,0 +1,188 @@
+﻿@model UserEditViewModel
+
+@{
+    ViewBag.Title = "Uredi korisnika";
+}
+
+<form method="post" class="mt-3">
+    <div class="form-group row">
+        <label asp-for="Id" class="col-sm-2 col-form-label"></label>
+        <div class="col-sm-10">
+            <input asp-for="Id" disabled class="form-control">
+        </div>
+    </div>
+    <div class="form-group row">
+        <label asp-for="UserName" class="col-sm-2 col-form-label"></label>
+        <div class="col-sm-10">
+            <input asp-for="UserName" disabled class="form-control">
+            <input asp-for="UserName" readonly class="form-control" type="hidden">
+        </div>
+    </div>
+    <div class="form-group row">
+        <label asp-for="FirstName" class="col-sm-2 col-form-label"></label>
+        <div class="col-sm-10">
+            <input asp-for="FirstName" class="form-control">
+            <span asp-validation-for="FirstName" class="text-danger"></span>
+        </div>
+    </div>
+    <div class="form-group row">
+        <label asp-for="LastName" class="col-sm-2 col-form-label"></label>
+        <div class="col-sm-10">
+            <input asp-for="LastName" class="form-control">
+            <span asp-validation-for="LastName" class="text-danger"></span>
+        </div>
+    </div>
+    <div class="form-group row">
+        <label asp-for="Email" class="col-sm-2 col-form-label"></label>
+        <div class="col-sm-10">
+            <input asp-for="Email" class="form-control">
+            <span asp-validation-for="Email" class="text-danger"></span>
+        </div>
+    </div>
+    <div class="form-group row">
+        <label asp-for="PhoneNumber" class="col-sm-2 col-form-label"></label>
+        <div class="col-sm-10">
+            <input asp-for="PhoneNumber" class="form-control">
+            <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+        </div>
+    </div>
+
+    @if (User.IsInRole("Super Admin"))
+    {
+        <div class="form-group row">
+            <label asp-for="CompanyList" class="col-sm-2 col-form-label"></label>
+            <div class="col-sm-10">
+                <select asp-for="CompanyId" class="custom-select mr-sm-2" asp-items="Model.CompanyList">
+                    <option value="">Molim izaberi</option>
+                </select>
+                <span asp-validation-for="CompanyId" class="text-danger"></span>
+            </div>
+        </div>
+    }
+    else
+    {
+
+        foreach (var x in Model.CompanyList)
+        {
+            if (x.Value == Model.CompanyId.ToString())
+            {
+                <div class="form-group row">
+                    <label asp-for="CompanyList" class="col-sm-2 col-form-label"></label>
+                    <div class="col-sm-10">
+                        <input id="CompanyName" disabled value="@x.Text" type="text" class="form-control" />
+                        <input id="CompanyId" value="@Model.CompanyId" type="hidden" class="form-control" />
+                    </div>
+                </div>
+            }
+        }
+    }
+    <div class="form-group row">
+        <label asp-for="Street" class="col-sm-2 col-form-label"></label>
+        <div class="col-sm-10">
+            <input asp-for="Street" class="form-control">
+            <span asp-validation-for="Street" class="text-danger"></span>
+        </div>
+    </div>
+    <div class="form-group row">
+        <label asp-for="City" class="col-sm-2 col-form-label"></label>
+        <div class="col-sm-10">
+            <input asp-for="City" class="form-control">
+            <span asp-validation-for="City" class="text-danger"></span>
+        </div>
+    </div>
+    <div class="form-group row">
+        <label asp-for="Country" class="col-sm-2 col-form-label"></label>
+        <div class="col-sm-10">
+            <input asp-for="Country" class="form-control">
+            <span asp-validation-for="Country" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div asp-validation-summary="All" class="text-danger"></div>
+
+    <div class="form-group row">
+        <div class="col-sm-10">
+            <button type="submit" class="btn btn-default">Izmjeni</button>
+            <a asp-action="ListUsers" class="btn btn-default">Poništi</a>
+        </div>
+    </div>
+    @if (User.IsInRole("Super Admin"))
+    {
+        <div class="card">
+            <div class="card-header">
+                <h3>Lokacije korisnika</h3>
+            </div>
+            <div class="card-body">
+                @if (Model.UserLocations.Where(a => a.UserId == Model.Id).Count() > 0)
+                {
+                    foreach (var location in Model.UserLocations)
+                    {
+                        <h5 class="card-title">@location.LocationName, </h5>
+                    }
+                }
+
+                else
+                {
+                    <h5 class="card-title">Lokacija trenutno nije dodjeljena</h5>
+                }
+            </div>
+            <div class="card-footer">
+                <a asp-controller="UserLocation" asp-action="Index" asp-route-userId="@Model.Id" class="btn btn-default" style="width:auto">
+                    Upravljanje lokacijama korisnika
+                </a>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+        <div class="card-header">
+        <h3>Uloge korisnika</h3>
+        </div>
+        <div class="card-body">
+                @if (Model.Roles.Any())
+                {
+                    foreach (var role in Model.Roles)
+                    {
+                        <h5 class="card-title">@role</h5>
+                    }
+                }
+                else
+                {
+                    <h5 class="card-title">Nijedna trenutno</h5>
+                }
+        </div>
+        <div class="card-footer">
+            <a asp-action="ManageUserRoles" asp-route-userId="@Model.Id" class="btn btn-default" style="width:auto">
+                Upravljanje ulogama
+            </a>
+        </div>
+    </div>
+
+    <div class="card mt-3">
+        <div class="card-header">
+            <h3>Mogućnosti korisnika</h3>
+        </div>
+        <div class="card-body">
+            @if (Model.Claims.Any())
+            {
+                foreach (var claim in Model.Claims)
+                {
+                    <h5 class="card-title">@claim</h5>
+                }
+            }
+            else
+            {
+                <h5 class="card-title">Nijedna trenutno</h5>
+            }
+        </div>
+        <div class="card-footer">
+            <a asp-action="ManageUserClaims" asp-route-userId="@Model.Id"
+               style="width:auto" class="btn btn-default">
+                Mogućnosti korisnika
+            </a>
+        </div>
+    </div>
+    }
+</form>
+@section Scripts {
+    <script src="~/js/CustomScript.js"></script>
+}
